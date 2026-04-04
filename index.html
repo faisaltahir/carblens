@@ -282,29 +282,76 @@ textarea.field{resize:none;line-height:1.5}
 .h-rise.bad{background:rgba(240,112,112,.1);color:var(--danger);border:1px solid rgba(240,112,112,.2)}
 
 /* STATS */
-.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-bottom:4px}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:15px;display:flex;flex-direction:column;gap:3px}
+/* ── STATS PAGE ── */
+.stats-pg{padding:0}
+.stats-hero{padding:20px 18px 16px;border-bottom:1px solid var(--border)}
+.stats-hero-title{font-size:22px;font-weight:800;margin-bottom:2px}
+.stats-hero-sub{font-size:11px;font-family:var(--mono);color:var(--dim)}
+/* ICR VERDICT CARD */
+.icr-verdict{margin:18px 18px 0;border-radius:var(--r);padding:18px;border:1.5px solid}
+.icr-verdict.match{background:rgba(61,220,110,.07);border-color:var(--accent)}
+.icr-verdict.low{background:rgba(245,200,66,.07);border-color:var(--warn)}
+.icr-verdict.high{background:rgba(240,112,112,.07);border-color:var(--danger)}
+.icr-verdict.nodata{background:var(--surface);border-color:var(--border)}
+.iv-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.iv-icon{font-size:22px;flex-shrink:0}
+.iv-title{font-size:14px;font-weight:700}
+.iv-sub{font-size:11px;font-family:var(--mono);color:var(--muted);margin-top:2px}
+.iv-numbers{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.iv-num{display:flex;flex-direction:column;align-items:center;gap:3px;background:rgba(0,0,0,.2);border-radius:9px;padding:11px 8px}
+.iv-val{font-size:22px;font-weight:800;font-family:var(--sans)}
+.iv-lbl{font-size:9px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.8px;text-align:center}
+.iv-verdict-text{font-size:12px;font-family:var(--mono);color:var(--muted);line-height:1.6;padding-top:12px;border-top:1px solid rgba(255,255,255,.06)}
+.iv-confidence{display:flex;align-items:center;gap:6px;margin-top:8px}
+.iv-conf-bar{flex:1;height:4px;background:rgba(255,255,255,.1);border-radius:100px;overflow:hidden}
+.iv-conf-fill{height:100%;border-radius:100px;background:var(--accent);transition:width .8s ease}
+.iv-conf-lbl{font-size:10px;font-family:var(--mono);color:var(--dim);white-space:nowrap}
+/* STATS SECTIONS */
+.stats-section{padding:18px 18px 0}
+.sec-ttl{font-size:10px;font-family:var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:1.8px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.sec-ttl::after{content:'';flex:1;height:1px;background:var(--border)}
+/* STAT GRID */
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:4px}
 .stat-card.hi{background:var(--accent-d);border-color:var(--accent)}
 .stat-card.wa{background:var(--warn-d);border-color:var(--warn)}
 .stat-card.gd{background:var(--accent-d);border-color:var(--accent)}
-.stat-v{font-size:28px;font-weight:800}
+.stat-card.wide{grid-column:1/-1}
+.stat-v{font-size:26px;font-weight:800;line-height:1}
 .stat-card.hi .stat-v{color:var(--accent)}
 .stat-card.wa .stat-v{color:var(--warn)}
 .stat-card.gd .stat-v{color:var(--accent)}
-.stat-l{font-size:10px;font-family:var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
-.sec-ttl{font-size:11px;font-family:var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px}
-.icr-cmp{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:15px}
-.icr-it{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
-.icr-lb{font-size:10px;font-family:var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:1px;text-align:center}
-.icr-v{font-size:22px;font-weight:800;color:var(--accent)}
-.icr-arr{font-size:16px;color:var(--dim)}
+.stat-l{font-size:10px;font-family:var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.stat-sub{font-size:11px;font-family:var(--mono);color:var(--muted);margin-top:3px}
+/* MINI TREND CHART */
+.trend-chart{width:100%;height:52px;margin-top:6px}
+.trend-svg{width:100%;height:100%;overflow:visible}
+/* GLUCOSE BAND */
+.glu-band{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.glu-band-row{display:flex;align-items:center;gap:10px}
+.glu-band-lbl{font-size:11px;font-family:var(--mono);color:var(--muted);width:58px;flex-shrink:0}
+.glu-band-track{flex:1;height:8px;background:var(--surface2);border-radius:100px;overflow:hidden;position:relative}
+.glu-band-fill{height:100%;border-radius:100px}
+.glu-band-val{font-size:12px;font-weight:700;font-family:var(--mono);width:52px;text-align:right;flex-shrink:0}
+/* GI BARS */
 .gi-row{display:flex;align-items:center;gap:11px}
-.gi-nm{font-family:var(--mono);font-size:11px;width:55px;text-transform:capitalize}
+.gi-nm{font-family:var(--mono);font-size:11px;width:52px;text-transform:capitalize}
 .gi-nm.low{color:var(--accent)}.gi-nm.medium{color:var(--warn)}.gi-nm.high{color:var(--danger)}
-.gi-track{flex:1;height:5px;background:var(--surface2);border-radius:100px;overflow:hidden}
+.gi-track{flex:1;height:6px;background:var(--surface2);border-radius:100px;overflow:hidden}
 .gi-fill{height:100%;border-radius:100px;transition:width .6s ease}
 .gi-fill.low{background:var(--accent)}.gi-fill.medium{background:var(--warn)}.gi-fill.high{background:var(--danger)}
 .gi-ct{font-family:var(--mono);font-size:11px;color:var(--muted);width:18px;text-align:right}
+/* STREAK / SUMMARY ROW */
+.summary-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sum-cell{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 10px;display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center}
+.sum-v{font-size:20px;font-weight:800}
+.sum-l{font-size:9px;font-family:var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
+/* legacy aliases */
+.icr-cmp{display:none}
+.icr-it{display:none}
+.icr-lb{display:none}
+.icr-v{display:none}
+.icr-arr{display:none}
 
 /* SETTINGS */
 .set-sec{display:flex;flex-direction:column;gap:11px;margin-bottom:24px}
@@ -348,6 +395,66 @@ textarea.field{resize:none;line-height:1.5}
 .spin{display:inline-block;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes slideup{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+/* ── GLUCOSE STRIP (log page) ── */
+.log-gluco-strip{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;margin-bottom:4px}
+.lgs-left{flex:1;min-width:0}
+.lgs-label{font-size:10px;font-family:var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px}
+.lgs-input-row{display:flex;align-items:center;gap:8px}
+.lgs-inp{background:none;border:none;border-bottom:1.5px solid var(--border-b);color:var(--accent);font-family:var(--mono);font-size:20px;font-weight:500;width:90px;outline:none;padding:2px 0;-moz-appearance:textfield}
+.lgs-inp::-webkit-outer-spin-button,.lgs-inp::-webkit-inner-spin-button{-webkit-appearance:none}
+.lgs-inp:focus{border-bottom-color:var(--accent)}
+.lgs-val{font-size:20px;font-weight:700;font-family:var(--mono)}
+.lgs-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+.lgs-iob{display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+.lgs-iob-val{font-size:14px;font-weight:700;font-family:var(--mono);color:var(--split)}
+.lgs-iob-lbl{font-size:9px;font-family:var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+.lgs-corr{display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+.lgs-corr-val{font-size:14px;font-weight:700;font-family:var(--mono);color:var(--warn)}
+.lgs-corr-lbl{font-size:9px;font-family:var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+.lgs-alert{font-size:10px;font-family:var(--mono);color:var(--danger);background:var(--danger-d);border:1px solid var(--danger);border-radius:6px;padding:3px 8px;text-align:center}
+
+/* ── FAVOURITES STRIP ── */
+.fav-strip{margin-bottom:4px}
+.fav-strip-label{font-size:10px;font-family:var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:7px}
+.fav-scroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.fav-scroll::-webkit-scrollbar{display:none}
+.fav-chip{background:var(--surface);border:1px solid var(--border-b);border-radius:100px;padding:7px 14px;display:flex;align-items:center;gap:8px;white-space:nowrap;cursor:pointer;transition:.15s;flex-shrink:0}
+.fav-chip:active{background:var(--accent-d);border-color:var(--accent)}
+.fav-chip-name{font-size:12px;font-weight:600;color:var(--text)}
+.fav-chip-carbs{font-size:11px;font-family:var(--mono);color:var(--accent)}
+.fav-save-btn{width:100%;background:none;border:1.5px dashed var(--accent);border-radius:var(--r);color:var(--accent);font-family:var(--mono);font-size:12px;padding:11px;cursor:pointer;transition:.15s}
+.fav-save-btn:active{background:var(--accent-d)}
+
+/* ── DOSE BREAKDOWN TABLE ── */
+.dose-breakdown{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.db-row{display:grid;grid-template-columns:auto 52px 1fr;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border)}
+.db-row:last-child{border-bottom:none}
+.db-row-note{grid-template-columns:1fr;padding:8px 14px}
+.db-lbl{font-size:12px;font-family:var(--mono);color:var(--muted)}
+.db-val{font-size:14px;font-weight:700;font-family:var(--mono);color:var(--text);text-align:right}
+.db-note{font-size:10px;font-family:var(--mono);color:var(--dim)}
+.db-total{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:var(--surface2);font-weight:700;font-size:14px;font-family:var(--mono);color:var(--accent)}
+
+/* ── HISTORY GRID VIEW ── */
+.view-toggle{background:var(--surface);border:1px solid var(--border);color:var(--muted);border-radius:8px;font-family:var(--mono);font-size:11px;padding:6px 12px;cursor:pointer;transition:.15s;white-space:nowrap}
+.view-toggle:active{border-color:var(--accent);color:var(--accent)}
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
+.pg-cell{position:relative;aspect-ratio:1;overflow:hidden;border-radius:6px;cursor:pointer;background:var(--surface2)}
+.pg-cell img{width:100%;height:100%;object-fit:cover;display:block;transition:.2s}
+.pg-cell:active img{opacity:.7}
+.pg-overlay{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.75));padding:6px 5px 5px;display:flex;justify-content:space-between;align-items:flex-end}
+.pg-carbs{font-size:11px;font-weight:700;font-family:var(--mono);color:#fff}
+.pg-dose{font-size:10px;font-family:var(--mono);color:rgba(255,255,255,.75)}
+
+/* ── AI NARRATIVE ── */
+.narrative-btn{background:var(--surface);border:1px solid var(--border-b);color:var(--muted);border-radius:8px;font-family:var(--mono);font-size:11px;padding:7px 12px;cursor:pointer;transition:.15s;white-space:nowrap}
+.narrative-btn:active{border-color:var(--accent);color:var(--accent)}
+.narrative-card{margin:14px 18px 0;background:linear-gradient(135deg,rgba(61,220,110,.06),rgba(95,168,245,.06));border:1px solid var(--border-b);border-radius:var(--r);padding:16px;animation:fadein .3s ease}
+.narrative-hdr{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:11px;font-family:var(--mono);color:var(--accent);text-transform:uppercase;letter-spacing:1.5px}
+.narrative-close{margin-left:auto;background:none;border:none;color:var(--dim);font-size:16px;cursor:pointer;padding:0 2px}
+.narrative-body{font-size:13px;color:var(--text);line-height:1.65;white-space:pre-wrap}
+.narrative-ts{font-size:10px;font-family:var(--mono);color:var(--dim);margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+
 
 /* REFINE PANEL */
 .refine-panel{width:100%}
@@ -358,6 +465,74 @@ textarea.field{resize:none;line-height:1.5}
 .refine-ico{font-size:20px;flex-shrink:0;margin-top:1px}
 .refine-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px}
 .refine-sub{font-size:11px;font-family:var(--mono);color:var(--muted);line-height:1.5}
+
+/* ── LOG GLUCOSE STRIP ── */
+.log-gluco-strip{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:4px}
+.lgs-left{display:flex;flex-direction:column;gap:6px;flex:1}
+.lgs-label{font-size:10px;font-family:var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:1.2px}
+.lgs-input-row{display:flex;align-items:center;gap:8px}
+.lgs-inp{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:18px;font-weight:500;padding:7px 12px;width:100px;text-align:center;-moz-appearance:textfield;outline:none}
+.lgs-inp:focus{border-color:var(--accent)}
+.lgs-inp::-webkit-outer-spin-button,.lgs-inp::-webkit-inner-spin-button{-webkit-appearance:none}
+.lgs-val{font-size:18px;font-weight:700;font-family:var(--mono)}
+.lgs-right{display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0}
+.lgs-iob{display:flex;flex-direction:column;align-items:center;background:var(--split-d);border:1px solid var(--split);border-radius:8px;padding:6px 10px}
+.lgs-iob-val{font-size:14px;font-weight:700;color:var(--split);font-family:var(--mono);line-height:1}
+.lgs-iob-lbl{font-size:9px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-top:2px}
+.lgs-corr{display:flex;flex-direction:column;align-items:center;background:var(--warn-d);border:1px solid var(--warn);border-radius:8px;padding:6px 10px}
+.lgs-corr-val{font-size:14px;font-weight:700;color:var(--warn);font-family:var(--mono);line-height:1}
+.lgs-corr-lbl{font-size:9px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-top:2px}
+.lgs-alert{background:var(--danger-d);border:1px solid var(--danger);border-radius:8px;color:var(--danger);font-family:var(--mono);font-size:10px;padding:5px 8px;text-align:center}
+
+/* ── FAVOURITES STRIP ── */
+.fav-strip{margin-bottom:4px}
+.fav-strip-label{font-size:10px;font-family:var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:7px}
+.fav-scroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.fav-scroll::-webkit-scrollbar{display:none}
+.fav-chip{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-start;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:9px 13px;cursor:pointer;transition:.15s;gap:2px}
+.fav-chip:active{border-color:var(--accent);background:var(--accent-d)}
+.fav-chip-name{font-size:12px;font-weight:600;color:var(--text);max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fav-chip-carbs{font-size:10px;font-family:var(--mono);color:var(--accent)}
+
+/* ── DOSE BREAKDOWN ── */
+.dose-breakdown{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:0}
+.db-row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)}
+.db-row:last-of-type{border-bottom:none}
+.db-row-note{grid-template-columns:1fr;border-bottom:none;padding:4px 0 0}
+.db-lbl{font-size:12px;font-family:var(--mono);color:var(--muted);white-space:nowrap}
+.db-val{font-size:14px;font-weight:700;font-family:var(--mono);color:var(--text);text-align:right;white-space:nowrap}
+.db-note{font-size:10px;font-family:var(--mono);color:var(--dim);text-align:right}
+.db-total{display:flex;justify-content:space-between;align-items:center;padding-top:10px;margin-top:4px;border-top:1.5px solid var(--border-b);font-weight:700;font-size:15px}
+.db-total span:last-child{color:var(--accent);font-size:18px}
+
+/* ── SAVE AS FAVOURITE ── */
+.fav-save-btn{width:100%;background:none;border:1px dashed var(--border-b);border-radius:var(--r);color:var(--muted);font-family:var(--mono);font-size:12px;padding:11px;cursor:pointer;transition:.15s;text-align:center}
+.fav-save-btn:active{border-color:var(--accent);color:var(--accent);background:var(--accent-d)}
+
+/* ── HISTORY VIEW TOGGLE ── */
+.view-toggle{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:var(--mono);font-size:11px;padding:6px 12px;cursor:pointer;transition:.15s}
+.view-toggle:active{border-color:var(--accent);color:var(--accent)}
+
+/* ── PHOTO GRID ── */
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;border-radius:var(--r);overflow:hidden}
+.pg-cell{position:relative;aspect-ratio:1;overflow:hidden;cursor:pointer;background:var(--surface2)}
+.pg-cell img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .2s}
+.pg-cell:active img{transform:scale(.96)}
+.pg-overlay{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.75));padding:6px 5px 5px;display:flex;justify-content:space-between;align-items:flex-end}
+.pg-carbs{font-size:11px;font-weight:700;color:#fff;font-family:var(--mono)}
+.pg-dose{font-size:10px;color:rgba(255,255,255,.7);font-family:var(--mono)}
+
+/* ── NARRATIVE / INSIGHTS ── */
+.narrative-btn{display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--border-b);border-radius:10px;color:var(--muted);font-family:var(--mono);font-size:12px;padding:10px 15px;cursor:pointer;transition:.15s;margin-bottom:12px}
+.narrative-btn:hover{border-color:var(--accent);color:var(--accent)}
+.narrative-btn:disabled{opacity:.5;cursor:not-allowed}
+.narrative-card{background:var(--surface);border:1px solid var(--border-b);border-radius:var(--r);padding:16px;margin-bottom:12px;animation:fadein .3s ease}
+.narrative-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.narrative-title{font-size:13px;font-weight:700;color:var(--accent)}
+.narrative-close{background:none;border:none;color:var(--dim);font-size:16px;cursor:pointer;padding:2px}
+.narrative-body{font-size:13px;line-height:1.7;color:var(--muted);font-family:var(--mono)}
+.narrative-ts{font-size:10px;color:var(--dim);font-family:var(--mono);margin-top:10px;border-top:1px solid var(--border);padding-top:8px}
+
 </style>
 </head>
 <body>
@@ -392,8 +567,11 @@ textarea.field{resize:none;line-height:1.5}
 let state = {
   page: 'log',
   meals: [],
-  settings: { icr: 5.5 },
+  favourites: [], // saved meal templates
+  settings: { icr: 5.5, isf: 40, targetGlucose: 100 }, // ISF = mg/dL drop per 1u; target glucose
   _confirmClear: false,
+  historyView: 'list', // 'list' | 'grid'
+  narrative: { text: null, loading: false, generatedAt: null },
   log: {
     phase: 'input', // input | clarifying | pre-glucose | result
     description: '',
@@ -405,6 +583,7 @@ let state = {
     dose: null,
     clarification: null,
     clarAnswers: {},
+    currentGlucose: null,   // entered on input page, used for correction + IOB
     preGlucose: null,
     postGlucose: null,
     currentMealId: null,
@@ -424,13 +603,20 @@ function load() {
     if (!raw) return
     const d = JSON.parse(raw)
     if (d.meals) state.meals = d.meals
-    if (d.settings) state.settings = d.settings
+    if (d.settings) state.settings = { ...state.settings, ...d.settings }
+    if (d.favourites) state.favourites = d.favourites
+    if (d.narrative) state.narrative = d.narrative
   } catch(e) {}
 }
 
 function save() {
   try {
-    localStorage.setItem('carblens_v2', JSON.stringify({ meals: state.meals, settings: state.settings }))
+    localStorage.setItem('carblens_v2', JSON.stringify({
+      meals: state.meals,
+      settings: state.settings,
+      favourites: state.favourites,
+      narrative: state.narrative
+    }))
   } catch(e) {}
 }
 
@@ -452,14 +638,49 @@ function nav(page) {
 // protein load, glycaemic index, dish type — rather than keyword matching.
 // This handles nihari, naan, biryani, dim sum, etc. correctly without lists.
 
-function calcDose(carbs, icr, isSplit) {
-  const total = Math.round((carbs / icr) * 10) / 10
-  if (isSplit && total >= 3) {
-    const now = Math.round(total * 0.6 * 10) / 10
-    const later = Math.round((total - now) * 10) / 10
-    return { total, now, later, delay: 90, split: true }
+function calcIOB() {
+  // IOB decays over 4 hours using a linear decay curve
+  // Find meals in last 4 hours that had a dose recorded
+  const fourHoursAgo = Date.now() - 4 * 60 * 60 * 1000
+  let iob = 0
+  state.meals.forEach(m => {
+    const mealTime = new Date(m.timestamp).getTime()
+    if (mealTime < fourHoursAgo) return
+    const hoursAgo = (Date.now() - mealTime) / (1000 * 60 * 60)
+    const decayFraction = Math.max(0, 1 - hoursAgo / 4) // linear 0→4h
+    iob += (m.dose.total || 0) * decayFraction
+  })
+  return Math.round(iob * 10) / 10
+}
+
+function calcCorrectionDose(currentGlucose) {
+  if (!currentGlucose) return 0
+  const target = state.settings.targetGlucose || 100
+  const isf = state.settings.isf || 40
+  const excess = currentGlucose - target
+  if (excess <= 0) return 0
+  return Math.round((excess / isf) * 10) / 10
+}
+
+function calcDose(carbs, icr, isSplit, currentGlucose) {
+  const foodDose = Math.round((carbs / icr) * 10) / 10
+  const correctionDose = calcCorrectionDose(currentGlucose)
+  const iob = calcIOB()
+  // Net correction = correction needed minus active insulin already on board
+  const netCorrection = Math.max(0, Math.round((correctionDose - iob) * 10) / 10)
+  const totalDose = Math.round((foodDose + netCorrection) * 10) / 10
+
+  if (isSplit && foodDose >= 3) {
+    const now = Math.round(foodDose * 0.6 * 10) / 10
+    const later = Math.round((foodDose - now) * 10) / 10
+    return {
+      total: totalDose,
+      foodDose, correctionDose, netCorrection, iob,
+      now: Math.round((now + netCorrection) * 10) / 10,
+      later, delay: 90, split: true
+    }
   }
-  return { total, split: false }
+  return { total: totalDose, foodDose, correctionDose, netCorrection, iob, split: false }
 }
 
 async function callGemini(parts) {
@@ -525,16 +746,16 @@ splitReason must explain the clinical rationale (e.g. "Nihari is a slow-cooked f
 notes: include GI warnings, hidden carb sources, portion size assumptions, diabetic watch-points.
 confidence: high=well-known dish with known values, medium=estimated, low=very vague description.`
 
-async function analyzeText(description, icr, extraContext) {
+async function analyzeText(description, icr, extraContext, currentGlucose) {
   const txt = await callGemini([{ text: NUTRITION_PROMPT(description, extraContext) }])
   const p = JSON.parse(txt)
   return {
     nutrition: { ...p, isSplit: p.splitDose, splitReason: p.splitReason },
-    dose: calcDose(p.carbs, icr, p.splitDose)
+    dose: calcDose(p.carbs, icr, p.splitDose, currentGlucose)
   }
 }
 
-async function analyzeImage(b64, mime, icr, clarifications, extraContext) {
+async function analyzeImage(b64, mime, icr, clarifications, extraContext, currentGlucose) {
   const clarNote = clarifications ? `\nUser clarifications: ${JSON.stringify(clarifications)}` : ''
   const extraNote = extraContext ? `\nAdditional context from user: "${extraContext}"` : ''
   const prompt = `You are a clinical nutrition AI for a Type 1 diabetic. Analyze this meal photo and return ONLY JSON.${clarNote}${extraNote}
@@ -568,7 +789,7 @@ SPLIT DOSE: Set splitDose:true for any meal that is fatty, slow-cooked, creamy, 
   if (p.status === 'needs_clarification') return { needsClarification: { questions: p.questions, partial: p.partialDescription } }
   return {
     nutrition: { ...p, isSplit: p.splitDose, splitReason: p.splitReason },
-    dose: calcDose(p.carbs, icr, p.splitDose)
+    dose: calcDose(p.carbs, icr, p.splitDose, currentGlucose)
   }
 }
 
@@ -578,8 +799,8 @@ async function doRefineAnalysis(extraContext) {
   render()
   try {
     let result
-    if (L.imageB64) result = await analyzeImage(L.imageB64, L.imageMime, state.settings.icr, null, extraContext)
-    else result = await analyzeText(L.description, state.settings.icr, extraContext)
+    if (L.imageB64) result = await analyzeImage(L.imageB64, L.imageMime, state.settings.icr, null, extraContext, L.currentGlucose)
+    else result = await analyzeText(L.description, state.settings.icr, extraContext, L.currentGlucose)
     L.nutrition = result.nutrition
     L.dose = result.dose
     L.showRefine = false
@@ -602,8 +823,8 @@ async function doAnalyze(clarifications) {
   render()
   try {
     let result
-    if (L.imageB64) result = await analyzeImage(L.imageB64, L.imageMime, state.settings.icr, clarifications, null)
-    else result = await analyzeText(L.description, state.settings.icr, null)
+    if (L.imageB64) result = await analyzeImage(L.imageB64, L.imageMime, state.settings.icr, clarifications, null, L.currentGlucose)
+    else result = await analyzeText(L.description, state.settings.icr, null, L.currentGlucose)
 
     if (result.needsClarification) {
       L.clarification = result.needsClarification
@@ -670,7 +891,7 @@ function resetLog() {
     loading: false, error: null, nutrition: null, dose: null,
     clarification: null, clarAnswers: {}, preGlucose: null, postGlucose: null,
     currentMealId: null, postRecorded: false, showPostInput: false,
-    showRefine: false, refining: false, refineContext: '', refineError: null
+    showRefine: false, refining: false, refineContext: '', refineError: null, currentGlucose: state.log.currentGlucose
   }
   render()
 }
@@ -727,14 +948,55 @@ function renderLog() {
 function renderInput() {
   const L = state.log
   const hasInput = L.description.trim() || L.imageB64
+  const iob = calcIOB()
+  const correction = L.currentGlucose ? calcCorrectionDose(L.currentGlucose) : 0
+  const netCorr = L.currentGlucose ? Math.max(0, Math.round((correction - iob) * 10) / 10) : 0
+  const glucoColor = !L.currentGlucose ? 'var(--muted)'
+    : L.currentGlucose < 70 ? 'var(--danger)'
+    : L.currentGlucose <= 100 ? 'var(--accent)'
+    : L.currentGlucose <= 140 ? 'var(--warn)'
+    : 'var(--danger)'
+
   return `
   <div class="pg">
     <div class="mt-2">
       <div class="pg-title">What are you eating?</div>
       <div class="pg-sub">Describe your meal or upload a photo</div>
     </div>
+
+    <!-- GLUCOSE + IOB STRIP -->
+    <div class="log-gluco-strip">
+      <div class="lgs-left">
+        <div class="lgs-label">Current glucose</div>
+        <div class="lgs-input-row">
+          <input class="lgs-inp" id="currentGluInput" type="number" min="40" max="600"
+            placeholder="mg/dL" value="${L.currentGlucose||''}"
+            oninput="setCurrentGlucose(this.value)">
+          ${L.currentGlucose ? `<span class="lgs-val" style="color:${glucoColor}">${L.currentGlucose}</span>` : ''}
+        </div>
+      </div>
+      <div class="lgs-right">
+        ${iob > 0 ? `<div class="lgs-iob"><span class="lgs-iob-val">${iob}u</span><span class="lgs-iob-lbl">IOB</span></div>` : ''}
+        ${netCorr > 0 ? `<div class="lgs-corr"><span class="lgs-corr-val">+${netCorr}u</span><span class="lgs-corr-lbl">correction</span></div>` : ''}
+        ${L.currentGlucose && L.currentGlucose < 70 ? `<div class="lgs-alert">⚠ Low — treat before eating</div>` : ''}
+      </div>
+    </div>
+
+    <!-- FAVOURITES -->
+    ${state.favourites.length > 0 ? `
+    <div class="fav-strip">
+      <div class="fav-strip-label">Favourites</div>
+      <div class="fav-scroll">
+        ${state.favourites.map(f => `
+        <button class="fav-chip" onclick="useFavourite('${f.id}')">
+          <span class="fav-chip-name">${f.name}</span>
+          <span class="fav-chip-carbs">${f.nutrition.carbs}g</span>
+        </button>`).join('')}
+      </div>
+    </div>` : ''}
+
     <div class="gap-4">
-      <textarea class="field" id="mealDesc" rows="4" placeholder="e.g. grilled chicken breast with basmati rice and steamed broccoli, medium portion...">${L.description}</textarea>
+      <textarea class="field" id="mealDesc" rows="3" placeholder="e.g. grilled chicken breast with basmati rice and steamed broccoli, medium portion...">${L.description}</textarea>
       <div class="or-div"><span>or</span></div>
       ${L.imageB64
         ? `<div class="photo-zone has-img">
@@ -833,6 +1095,7 @@ function renderResult() {
       </div>
     </div>
 
+    <!-- DOSE BREAKDOWN CARD -->
     ${d.split ? `
     <div class="dose-card spl">
       <div class="dose-hdr"><span>⚡</span> Split Dose Recommended</div>
@@ -841,13 +1104,42 @@ function renderResult() {
         <div class="split-plus">+</div>
         <div class="split-item"><span class="split-u">${d.later}u</span><span class="split-lb">${d.delay} min later</span></div>
       </div>
-      <div class="split-tot">Total: ${d.total}u · ICR 1:${state.settings.icr}</div>
+      <div class="split-tot">Total bolus: <b>${d.total}u</b></div>
       ${n.splitReason ? `<div class="split-why">${n.splitReason}</div>` : ''}
     </div>` : `
     <div class="dose-card std">
-      <div class="dose-hdr">Insulin Dose</div>
-      <div class="dose-row"><span class="dose-big">${d.total}</span><span class="dose-lbl">units · ICR 1:${state.settings.icr}</span></div>
+      <div class="dose-hdr">Total Bolus Dose</div>
+      <div class="dose-row"><span class="dose-big">${d.total}</span><span class="dose-lbl">units</span></div>
     </div>`}
+
+    <!-- DOSE BREAKDOWN TABLE -->
+    <div class="dose-breakdown">
+      <div class="db-row">
+        <span class="db-lbl">🍽 Food dose</span>
+        <span class="db-val">${d.foodDose}u</span>
+        <span class="db-note">ICR 1:${state.settings.icr} × ${n.carbs}g carbs</span>
+      </div>
+      ${(d.correctionDose||0) > 0 ? `
+      <div class="db-row">
+        <span class="db-lbl">🩸 Correction</span>
+        <span class="db-val" style="color:var(--warn)">${d.correctionDose}u</span>
+        <span class="db-note">Glucose ${L.currentGlucose} → target ${state.settings.targetGlucose}</span>
+      </div>` : ''}
+      ${(d.iob||0) > 0 ? `
+      <div class="db-row">
+        <span class="db-lbl">💉 IOB deducted</span>
+        <span class="db-val" style="color:var(--split)">−${d.iob}u</span>
+        <span class="db-note">Active insulin on board</span>
+      </div>` : ''}
+      ${(d.netCorrection||0) === 0 && (d.correctionDose||0) > 0 ? `
+      <div class="db-row db-row-note">
+        <span style="color:var(--accent);font-size:11px">✓ IOB covers the correction — no additional units needed</span>
+      </div>` : ''}
+      <div class="db-total">
+        <span>Total bolus</span>
+        <span>${d.total}u</span>
+      </div>
+    </div>
 
     <div class="nut-grid">
       ${[['Calories', n.calories, 'kcal', false],['Carbs', n.carbs, 'g', true],['Protein', n.protein, 'g', false],['Fat', n.fat, 'g', false],['Fiber', n.fiber, 'g', false],['Sugar', n.sugar, 'g', false]].map(([lb, val, u, hi]) => `
@@ -910,6 +1202,13 @@ function renderResult() {
       </button>`}
     </div>
 
+    <!-- SAVE AS FAVOURITE -->
+    ${!state.favourites.find(f => f.name === n.mealDescription) ? `
+    <button class="fav-save-btn" onclick="saveAsFavourite()">
+      ☆ Save as favourite
+    </button>` : `
+    <div style="font-size:11px;font-family:var(--mono);color:var(--accent);text-align:center;padding:6px">✓ Saved as favourite</div>`}
+
     <button class="btn-sec" style="width:100%;margin-top:2px" onclick="resetLog()">+ Log another meal</button>
   </div>`
 }
@@ -917,20 +1216,54 @@ function renderResult() {
 // ── HISTORY ───────────────────────────────────────────────────
 function renderHistory() {
   if (!state.meals.length) return `<div class="pg"><div class="empty"><span class="empty-ico">◷</span><h2>No meals logged yet</h2><p>Your meal history will appear here</p></div></div>`
+
+  const isGrid = state.historyView === 'grid'
   const grouped = {}
   state.meals.forEach(m => {
     const d = new Date(m.timestamp).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
     if (!grouped[d]) grouped[d] = []
     grouped[d].push(m)
   })
+
+  if (isGrid) {
+    // Photo grid — all meals with images shown in a masonry-style grid
+    const withPhotos = state.meals.filter(m => m.imageB64)
+    return `<div class="pg">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div class="pg-title" style="margin-bottom:0">Food Diary</div>
+        <button class="view-toggle" onclick="state.historyView='list';render()">☰ List</button>
+      </div>
+      ${withPhotos.length === 0
+        ? `<div style="text-align:center;padding:40px 20px;color:var(--muted);font-family:var(--mono);font-size:13px">No photos logged yet.<br>Take a photo when logging a meal to build your food diary.</div>`
+        : `<div class="photo-grid">
+            ${withPhotos.map(m => `
+            <div class="pg-cell" onclick="state.historyView='list';state.meals.forEach(x=>x._expanded=false);toggleHistoryAndSwitch('${m.id}')">
+              <img src="data:${m.imageMime||'image/jpeg'};base64,${m.imageB64}" loading="lazy">
+              <div class="pg-overlay">
+                <span class="pg-carbs">${m.nutrition.carbs}g</span>
+                <span class="pg-dose">${m.dose.total}u${m.dose.split?'⚡':''}</span>
+              </div>
+            </div>`).join('')}
+          </div>`}
+    </div>`
+  }
+
   return `<div class="pg">
-    <div class="pg-title">Meal History</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div class="pg-title" style="margin-bottom:0">Meal History</div>
+      <button class="view-toggle" onclick="state.historyView='grid';render()">⊞ Photos</button>
+    </div>
     ${Object.entries(grouped).map(([date, meals]) => `
     <div class="day-grp">
       <div class="day-lbl">${date}</div>
       ${meals.map(m => renderHistoryCard(m)).join('')}
     </div>`).join('')}
   </div>`
+}
+
+function toggleHistoryAndSwitch(id) {
+  const meal = state.meals.find(m => m.id === id)
+  if (meal) { meal._expanded = true; render() }
 }
 
 function renderHistoryCard(m) {
@@ -1036,70 +1369,301 @@ function renderHistoryCard(m) {
 function renderStats() {
   const meals = state.meals
   if (!meals.length) return `<div class="pg"><div class="empty"><span class="empty-ico">◈</span><h2>No data yet</h2><p>Log some meals to see your stats</p></div></div>`
+
+  // ── Core helpers ──
   const avg = arr => arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length * 10) / 10 : 0
+  const r1 = n => Math.round(n * 10) / 10
+
+  // ── Date ranges ──
+  const now = new Date()
+  const d7 = new Date(now); d7.setDate(d7.getDate()-7)
+  const d30 = new Date(now); d30.setDate(d30.getDate()-30)
+  const recent7 = meals.filter(m => new Date(m.timestamp) > d7)
+  const recent30 = meals.filter(m => new Date(m.timestamp) > d30)
+
+  // ── Nutrition averages ──
   const avgCarbs = avg(meals.map(m => m.nutrition.carbs))
-  const avgCal = avg(meals.map(m => m.nutrition.calories))
-  const avgDose = avg(meals.map(m => m.dose.total))
-  const avgProt = avg(meals.map(m => m.nutrition.protein))
-  const avgFat = avg(meals.map(m => m.nutrition.fat))
-  const splits = meals.filter(m => m.dose.split).length
+  const avgCal   = avg(meals.map(m => m.nutrition.calories))
+  const avgDose  = avg(meals.map(m => m.dose.total))
+  const avgProt  = avg(meals.map(m => m.nutrition.protein))
+  const avgFat   = avg(meals.map(m => m.nutrition.fat))
+  const avgFiber = avg(meals.map(m => m.nutrition.fiber))
+  const splits   = meals.filter(m => m.dose.split).length
   const splitPct = Math.round(splits / meals.length * 100)
-  const withGlu = meals.filter(m => m.preGlucose && m.postGlucose)
-  const avgPre = avg(withGlu.map(m => m.preGlucose.value))
-  const avgPost = avg(withGlu.map(m => m.postGlucose.value))
-  const avgRise = avg(withGlu.map(m => m.postGlucose.value - m.preGlucose.value))
-  const effICRs = meals.filter(m => m.effectiveICR).map(m => m.effectiveICR)
-  const avgEffICR = avg(effICRs)
-  const giD = { low: meals.filter(m=>m.nutrition.glycemicIndex==='low').length, medium: meals.filter(m=>m.nutrition.glycemicIndex==='medium').length, high: meals.filter(m=>m.nutrition.glycemicIndex==='high').length }
+
+  // ── Glucose data ──
+  const withBoth = meals.filter(m => m.preGlucose && m.postGlucose)
+  const avgPre   = avg(withBoth.map(m => m.preGlucose.value))
+  const avgPost  = avg(withBoth.map(m => m.postGlucose.value))
+  const avgRise  = avg(withBoth.map(m => m.postGlucose.value - m.preGlucose.value))
+  const wellCtrl = withBoth.filter(m => (m.postGlucose.value - m.preGlucose.value) <= 30).length
+  const wellPct  = withBoth.length ? Math.round(wellCtrl / withBoth.length * 100) : 0
+
+  // ── DATA-DRIVEN ICR CALCULATION ──
+  // Method 1: from effectiveICR fields (pre+post glucose recorded)
+  const effICRs = meals.filter(m => m.effectiveICR && m.effectiveICR > 0).map(m => m.effectiveICR)
+  const avgEffICR = effICRs.length ? r1(avg(effICRs)) : null
+
+  // Method 2: direct carbs/dose ratio (doesn't require glucose, just meal data)
+  // This is the raw ICR implied by how much insulin was taken per gram of carbs
+  const carbDoseRatios = meals.filter(m => m.dose.total > 0 && m.nutrition.carbs > 0)
+                              .map(m => m.nutrition.carbs / m.dose.total)
+  const impliedICR = carbDoseRatios.length ? r1(avg(carbDoseRatios)) : null
+
+  // Use effectiveICR if available (more accurate), else fall back to implied
+  const dataICR = avgEffICR || impliedICR
+  const dataICRMethod = avgEffICR ? 'glucose-adjusted' : (impliedICR ? 'dose-implied' : null)
+  const dataICRN = avgEffICR ? effICRs.length : carbDoseRatios.length
+  const confidence = dataICRN >= 10 ? 'high' : dataICRN >= 5 ? 'medium' : dataICRN >= 2 ? 'low' : null
+  const confPct = dataICRN >= 10 ? 95 : dataICRN >= 5 ? 65 : dataICRN >= 2 ? 35 : 10
+
+  const setICR = state.settings.icr
+  const icrDiff = dataICR ? r1(dataICR - setICR) : null
+  const icrVerdict = !dataICR ? 'nodata'
+    : Math.abs(icrDiff) <= 0.5 ? 'match'
+    : icrDiff > 0 ? 'low'   // data ICR higher → your current dose may be too high (too much insulin per carb)
+    : 'high'                 // data ICR lower  → current dose may be too little
+
+  const verdictIcon = { match:'✓', low:'↑', high:'↓', nodata:'?' }[icrVerdict]
+  const verdictTitle = {
+    match: 'Your ICR looks well calibrated',
+    low:   'Data suggests your ICR may be too aggressive',
+    high:  'Data suggests your ICR may be too conservative',
+    nodata:'Not enough data yet'
+  }[icrVerdict]
+  const verdictSub = {
+    match: `1:${dataICR} measured vs 1:${setICR} set — within tolerance`,
+    low:   `Measured 1:${dataICR} vs set 1:${setICR} — you may need fewer units per meal`,
+    high:  `Measured 1:${dataICR} vs set 1:${setICR} — you may need more units per meal`,
+    nodata: 'Log more meals with glucose readings to get a personalised ICR recommendation'
+  }[icrVerdict]
+  const verdictDetail = {
+    match: `Based on ${dataICRN} meal${dataICRN!==1?'s':''} (${dataICRMethod}), your insulin dosing aligns with your set ratio. Continue monitoring.`,
+    low:   `Your data-derived ratio is ${Math.abs(icrDiff).toFixed(1)} higher than your setting. If this persists across ${dataICRN} meals, consider adjusting upward. Always confirm with your diabetes care team before changing your ratio.`,
+    high:  `Your data-derived ratio is ${Math.abs(icrDiff).toFixed(1)} lower than your setting. Post-meal glucose may be running higher than expected. Discuss with your care team.`,
+    nodata: 'Add pre- and post-meal glucose readings to your history cards to unlock personalised ICR analysis.'
+  }[icrVerdict]
+
+  // ── Mini sparkline data (last 14 meals, carbs) ──
+  const spark = meals.slice(0, 14).reverse()
+  const sparkMax = Math.max(...spark.map(m => m.nutrition.carbs), 1)
+  const sparkW = 100 / Math.max(spark.length, 1)
+  const sparkPoints = spark.map((m, i) => {
+    const x = i * sparkW + sparkW/2
+    const y = 44 - (m.nutrition.carbs / sparkMax) * 38
+    return `${x},${y}`
+  }).join(' ')
+
+  // ── Dose trend sparkline ──
+  const doseMax = Math.max(...spark.map(m => m.dose.total), 1)
+  const dosePoints = spark.map((m, i) => {
+    const x = i * sparkW + sparkW/2
+    const y = 44 - (m.dose.total / doseMax) * 38
+    return `${x},${y}`
+  }).join(' ')
+
+  // ── GI distribution ──
+  const giD = {
+    low:    meals.filter(m => m.nutrition.glycemicIndex === 'low').length,
+    medium: meals.filter(m => m.nutrition.glycemicIndex === 'medium').length,
+    high:   meals.filter(m => m.nutrition.glycemicIndex === 'high').length,
+  }
   const maxGI = Math.max(giD.low, giD.medium, giD.high, 1)
-  const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate()-7)
-  const recent = meals.filter(m => new Date(m.timestamp) > sevenAgo).length
 
-  return `<div class="pg">
-    <div class="pg-title">Stats</div>
-    <div class="pg-sub">${meals.length} meals logged · Last 7 days: ${recent}</div>
+  // ── Highest carb meal ──
+  const highCarbMeal = meals.reduce((a,b) => b.nutrition.carbs > a.nutrition.carbs ? b : a, meals[0])
+  const highDoseMeal = meals.reduce((a,b) => b.dose.total > a.dose.total ? b : a, meals[0])
 
-    <div class="stat-grid">
-      <div class="stat-card"><span class="stat-v">${avgCarbs}g</span><span class="stat-l">Avg carbs</span></div>
-      <div class="stat-card"><span class="stat-v">${avgCal}</span><span class="stat-l">Avg calories</span></div>
-      <div class="stat-card hi"><span class="stat-v">${avgDose}u</span><span class="stat-l">Avg insulin dose</span></div>
-      <div class="stat-card"><span class="stat-v">${avgProt}g</span><span class="stat-l">Avg protein</span></div>
-      <div class="stat-card"><span class="stat-v">${avgFat}g</span><span class="stat-l">Avg fat</span></div>
-      <div class="stat-card ${splitPct > 30 ? 'wa' : ''}"><span class="stat-v">${splitPct}%</span><span class="stat-l">Split dose meals</span></div>
+  return `<div class="stats-pg">
+
+    <!-- HEADER -->
+    <div class="stats-hero">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div class="stats-hero-title">Stats</div>
+          <div class="stats-hero-sub">${meals.length} meals logged · ${recent7.length} this week · ${recent30.length} this month</div>
+        </div>
+        <button class="narrative-btn" onclick="generateNarrative()" ${state.narrative.loading ? 'disabled' : ''}>
+          ${state.narrative.loading ? '<span class="spin">⟳</span>' : '✦ Insights'}
+        </button>
+      </div>
     </div>
 
-    ${withGlu.length > 0 ? `
-    <div style="margin-top:22px">
-      <div class="sec-ttl">Glucose Tracking (${withGlu.length} meals)</div>
+    <!-- AI NARRATIVE -->
+    ${state.narrative.text ? `
+    <div class="narrative-card">
+      <div class="narrative-hdr">
+        <span>✦</span>
+        <span>AI Pattern Analysis</span>
+        <button class="narrative-close" onclick="state.narrative.text=null;save();render()">✕</button>
+      </div>
+      <div class="narrative-body">${state.narrative.text}</div>
+      <div class="narrative-ts">Generated ${new Date(state.narrative.generatedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+    </div>` : ''}
+
+    <!-- ICR VERDICT — top of page, most important -->
+    <div class="icr-verdict ${icrVerdict}">
+      <div class="iv-header">
+        <span class="iv-icon">${verdictIcon}</span>
+        <div>
+          <div class="iv-title">${verdictTitle}</div>
+          <div class="iv-sub">${verdictSub}</div>
+        </div>
+      </div>
+      <div class="iv-numbers">
+        <div class="iv-num">
+          <span class="iv-val" style="color:var(--accent)">1:${setICR}</span>
+          <span class="iv-lbl">Set ICR</span>
+        </div>
+        <div class="iv-num">
+          <span class="iv-val" style="color:${icrVerdict==='match'?'var(--accent)':icrVerdict==='nodata'?'var(--dim)':'var(--warn)'}">${dataICR ? '1:'+dataICR : '—'}</span>
+          <span class="iv-lbl">Data ICR</span>
+        </div>
+        <div class="iv-num">
+          <span class="iv-val" style="color:${icrDiff===null?'var(--dim)':Math.abs(icrDiff)<=0.5?'var(--accent)':'var(--warn)'}">${icrDiff !== null ? (icrDiff > 0 ? '+' : '') + icrDiff : '—'}</span>
+          <span class="iv-lbl">Difference</span>
+        </div>
+      </div>
+      ${confidence ? `
+      <div class="iv-confidence">
+        <span class="iv-conf-lbl">Confidence</span>
+        <div class="iv-conf-bar"><div class="iv-conf-fill" style="width:${confPct}%"></div></div>
+        <span class="iv-conf-lbl">${confidence} (${dataICRN} meals)</span>
+      </div>` : ''}
+      <div class="iv-verdict-text">${verdictDetail}</div>
+    </div>
+
+    <!-- SUMMARY ROW -->
+    <div class="stats-section" style="margin-top:18px">
+      <div class="sec-ttl">Overview</div>
+      <div class="summary-row">
+        <div class="sum-cell"><span class="sum-v" style="color:var(--accent)">${meals.length}</span><span class="sum-l">Total meals</span></div>
+        <div class="sum-cell"><span class="sum-v" style="color:var(--split)">${splits}</span><span class="sum-l">Split doses</span></div>
+        <div class="sum-cell"><span class="sum-v" style="color:${wellPct>=70?'var(--accent)':wellPct>=50?'var(--warn)':'var(--danger)'}">${withBoth.length ? wellPct+'%' : '—'}</span><span class="sum-l">Well controlled</span></div>
+      </div>
+    </div>
+
+    <!-- NUTRITION AVERAGES -->
+    <div class="stats-section" style="margin-top:18px">
+      <div class="sec-ttl">Nutrition averages</div>
       <div class="stat-grid">
-        <div class="stat-card"><span class="stat-v">${avgPre}</span><span class="stat-l">Avg pre-meal</span></div>
-        <div class="stat-card"><span class="stat-v">${avgPost}</span><span class="stat-l">Avg post-meal</span></div>
-        <div class="stat-card ${avgRise > 50 ? 'wa' : avgRise <= 30 ? 'gd' : ''}"><span class="stat-v">+${Math.max(0,avgRise)}</span><span class="stat-l">Avg glucose rise</span></div>
+        <div class="stat-card hi">
+          <span class="stat-v">${avgCarbs}g</span>
+          <span class="stat-l">Avg carbs / meal</span>
+          <span class="stat-sub">Implies ~${r1(avgCarbs/setICR)}u insulin</span>
+        </div>
+        <div class="stat-card hi">
+          <span class="stat-v">${avgDose}u</span>
+          <span class="stat-l">Avg insulin dose</span>
+          <span class="stat-sub">Actual bolus given</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-v">${avgCal}</span>
+          <span class="stat-l">Avg calories</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-v">${avgProt}g</span>
+          <span class="stat-l">Avg protein</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-v">${avgFat}g</span>
+          <span class="stat-l">Avg fat</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-v">${avgFiber}g</span>
+          <span class="stat-l">Avg fiber</span>
+        </div>
+        <div class="stat-card wide">
+          <span class="stat-l" style="margin-bottom:4px">Carb trend — last ${spark.length} meals</span>
+          <div class="trend-chart">
+            <svg class="trend-svg" viewBox="0 0 100 48" preserveAspectRatio="none">
+              <polyline points="${sparkPoints}" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+              ${spark.map((m,i) => `<circle cx="${i * sparkW + sparkW/2}" cy="${44-(m.nutrition.carbs/sparkMax)*38}" r="2" fill="var(--accent)" vector-effect="non-scaling-stroke"/>`).join('')}
+            </svg>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:9px;font-family:var(--mono);color:var(--dim);margin-top:2px">
+            <span>oldest</span><span>most recent</span>
+          </div>
+        </div>
       </div>
-    </div>` : ''}
+    </div>
 
-    ${effICRs.length > 0 ? `
-    <div style="margin-top:22px">
-      <div class="sec-ttl">ICR Analysis</div>
-      <div class="icr-cmp">
-        <div class="icr-it"><span class="icr-lb">Set ICR</span><span class="icr-v">1:${state.settings.icr}</span></div>
-        <span class="icr-arr">→</span>
-        <div class="icr-it"><span class="icr-lb">Measured effective ICR</span><span class="icr-v">1:${avgEffICR}</span></div>
+    <!-- GLUCOSE SECTION -->
+    ${withBoth.length > 0 ? `
+    <div class="stats-section" style="margin-top:18px">
+      <div class="sec-ttl">Glucose response (${withBoth.length} meals)</div>
+      <div class="glu-band" style="margin-bottom:10px">
+        <div class="glu-band-row">
+          <span class="glu-band-lbl">Pre-meal</span>
+          <div class="glu-band-track">
+            <div class="glu-band-fill" style="width:${Math.min(avgPre/300*100,100)}%;background:${avgPre<100?'var(--accent)':avgPre<140?'var(--warn)':'var(--danger)'}"></div>
+          </div>
+          <span class="glu-band-val" style="color:${avgPre<100?'var(--accent)':avgPre<140?'var(--warn)':'var(--danger)'}">${avgPre}</span>
+        </div>
+        <div class="glu-band-row">
+          <span class="glu-band-lbl">Post-meal</span>
+          <div class="glu-band-track">
+            <div class="glu-band-fill" style="width:${Math.min(avgPost/300*100,100)}%;background:${avgPost<140?'var(--accent)':avgPost<180?'var(--warn)':'var(--danger)'}"></div>
+          </div>
+          <span class="glu-band-val" style="color:${avgPost<140?'var(--accent)':avgPost<180?'var(--warn)':'var(--danger)'}">${avgPost}</span>
+        </div>
+        <div class="glu-band-row">
+          <span class="glu-band-lbl">Rise</span>
+          <div class="glu-band-track">
+            <div class="glu-band-fill" style="width:${Math.min(Math.max(avgRise,0)/100*100,100)}%;background:${avgRise<=30?'var(--accent)':avgRise<=60?'var(--warn)':'var(--danger)'}"></div>
+          </div>
+          <span class="glu-band-val" style="color:${avgRise<=30?'var(--accent)':avgRise<=60?'var(--warn)':'var(--danger)'}">+${Math.max(0,avgRise)}</span>
+        </div>
       </div>
-      ${avgEffICR > state.settings.icr + 0.5 ? `<div class="err-box" style="background:var(--warn-d);border-color:var(--warn);color:var(--warn);margin-top:8px">Your effective ICR may be higher than set. Consider reviewing with your care team.</div>` : ''}
-    </div>` : ''}
+      <div class="stat-grid">
+        <div class="stat-card ${wellPct>=70?'gd':wellPct>=50?'':'wa'}">
+          <span class="stat-v">${wellPct}%</span>
+          <span class="stat-l">Well controlled</span>
+          <span class="stat-sub">Rise ≤30 mg/dL</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-v">${withBoth.filter(m=>(m.postGlucose.value-m.preGlucose.value)>60).length}</span>
+          <span class="stat-l">High spikes</span>
+          <span class="stat-sub">Rise >60 mg/dL</span>
+        </div>
+      </div>
+    </div>` : `
+    <div class="stats-section" style="margin-top:18px">
+      <div class="sec-ttl">Glucose response</div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:24px;margin-bottom:6px">🩸</div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:4px">No glucose data yet</div>
+        <div style="font-size:11px;font-family:var(--mono);color:var(--muted);line-height:1.5">Add pre and post-meal glucose readings in your history cards to unlock glucose response tracking and improve your ICR accuracy.</div>
+      </div>
+    </div>`}
 
-    <div style="margin-top:22px">
-      <div class="sec-ttl">Glycaemic Index Distribution</div>
+    <!-- SPLIT DOSE & GI -->
+    <div class="stats-section" style="margin-top:18px">
+      <div class="sec-ttl">Meal characteristics</div>
+      <div class="stat-grid" style="margin-bottom:12px">
+        <div class="stat-card ${splitPct>40?'wa':''}">
+          <span class="stat-v">${splitPct}%</span>
+          <span class="stat-l">Split dose meals</span>
+          <span class="stat-sub">${splits} of ${meals.length} meals</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-v">${highCarbMeal.nutrition.carbs}g</span>
+          <span class="stat-l">Highest carb meal</span>
+          <span class="stat-sub">${(highCarbMeal.description||highCarbMeal.nutrition.mealDescription||'').substring(0,22)}…</span>
+        </div>
+      </div>
       <div class="gap-3">
+        <div class="sec-ttl" style="margin-bottom:8px">Glycaemic index spread</div>
         ${['low','medium','high'].map(level => `
         <div class="gi-row">
           <span class="gi-nm ${level}">${level.charAt(0).toUpperCase()+level.slice(1)}</span>
-          <div class="gi-track"><div class="gi-fill ${level}" style="width:${giD[level]/maxGI*100}%"></div></div>
+          <div class="gi-track"><div class="gi-fill ${level}" style="width:${(giD[level]/maxGI)*100}%"></div></div>
           <span class="gi-ct">${giD[level]}</span>
         </div>`).join('')}
       </div>
     </div>
+
+    <div style="height:24px"></div>
   </div>`
 }
 
@@ -1118,6 +1682,36 @@ function renderSettings() {
       </div>
       <button class="btn-sm" id="saveIcrBtn" style="align-self:flex-start" onclick="saveICR()">Save ICR</button>
     </div>
+
+    <div class="set-sec">
+      <div class="set-ttl">Correction Dose Settings</div>
+      <p style="font-size:12px;font-family:var(--mono);color:var(--muted)">Used to calculate correction dose when your glucose is above target.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">ISF (mg/dL per unit)</div>
+          <input class="field" id="isfInput" type="number" min="10" max="200" step="5" value="${state.settings.isf||40}" placeholder="40">
+        </div>
+        <div>
+          <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Target glucose</div>
+          <input class="field" id="targetGluInput" type="number" min="60" max="200" step="5" value="${state.settings.targetGlucose||100}" placeholder="100">
+        </div>
+      </div>
+      <button class="btn-sm" id="saveCorrBtn" style="align-self:flex-start" onclick="saveCorrectionSettings()">Save</button>
+      <div style="font-size:11px;font-family:var(--mono);color:var(--dim);line-height:1.5">ISF = how many mg/dL 1 unit of insulin drops your glucose. Typical range: 30–60. Confirm with your care team.</div>
+    </div>
+
+    ${state.favourites.length > 0 ? `
+    <div class="set-sec">
+      <div class="set-ttl">Favourites (${state.favourites.length})</div>
+      ${state.favourites.map(f => `
+      <div style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 13px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</div>
+          <div style="font-size:11px;font-family:var(--mono);color:var(--muted)">${f.nutrition.carbs}g carbs · ${f.nutrition.calories} kcal</div>
+        </div>
+        <button onclick="deleteFavourite('${f.id}')" style="background:none;border:none;color:var(--dim);font-size:16px;cursor:pointer;padding:4px">🗑</button>
+      </div>`).join('')}
+    </div>` : ''}
 
     <div class="set-sec">
       <div class="set-ttl">Gemini API Key</div>
@@ -1157,8 +1751,18 @@ function renderSettings() {
           <div><strong>Local Backup</strong><p>Downloads history as a JSON file</p></div>
           <span class="integ-st on">Ready</span>
         </div>
-        <div class="integ-note small">Tap the ☁ button in the header to download your meal history as a JSON file. Save it to Google Drive, email it to yourself, or restore it on another device.</div>
-        <button class="btn-ghost" onclick="syncToDrive()" style="align-self:flex-start">Download backup →</button>
+        <div class="integ-note small">Download your meal history as JSON, or export a PDF report for your diabetes consultant.</div>
+        <div class="row" style="gap:8px;flex-wrap:wrap">
+          <button class="btn-ghost" onclick="syncToDrive()" style="flex:1">↓ JSON backup</button>
+          <button class="btn-ghost" onclick="exportPDF()" style="flex:1">↓ PDF report</button>
+        </div>
+        <div style="margin-top:4px">
+          <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:6px">Restore from backup</div>
+          <div class="photo-btn-wrap" style="border-style:dashed;border-color:var(--border-b)">
+            <div class="ph-btn-inner" style="padding:10px 16px;font-size:12px;gap:6px"><span>📂</span><span>Choose JSON backup file</span></div>
+            <input type="file" accept=".json,application/json" onchange="restoreBackup(this)" class="ph-file-inp">
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1358,6 +1962,199 @@ function saveGeminiKey() {
   const btn = document.getElementById('saveGeminiBtn')
   if (btn) { btn.textContent = '✓ Saved'; setTimeout(() => { btn.textContent = 'Save Key'; render() }, 1500) }
   render()
+}
+
+
+// ── GLUCOSE INPUT ────────────────────────────────────────────
+function setCurrentGlucose(val) {
+  const num = parseFloat(val)
+  state.log.currentGlucose = isNaN(num) || num <= 0 ? null : num
+  // Re-render just the strip area without full render for responsiveness
+  const strip = document.querySelector('.lgs-right')
+  if (strip) {
+    const iob = calcIOB()
+    const correction = state.log.currentGlucose ? calcCorrectionDose(state.log.currentGlucose) : 0
+    const netCorr = state.log.currentGlucose ? Math.max(0, Math.round((correction - iob) * 10) / 10) : 0
+    strip.innerHTML = `
+      ${iob > 0 ? `<div class="lgs-iob"><span class="lgs-iob-val">${iob}u</span><span class="lgs-iob-lbl">IOB</span></div>` : ''}
+      ${netCorr > 0 ? `<div class="lgs-corr"><span class="lgs-corr-val">+${netCorr}u</span><span class="lgs-corr-lbl">correction</span></div>` : ''}
+      ${state.log.currentGlucose && state.log.currentGlucose < 70 ? `<div class="lgs-alert">⚠ Low — treat first</div>` : ''}
+    `
+  }
+}
+
+// ── FAVOURITES ────────────────────────────────────────────────
+function saveAsFavourite() {
+  const L = state.log
+  if (!L.nutrition) return
+  const fav = {
+    id: crypto.randomUUID(),
+    name: L.nutrition.mealDescription,
+    description: L.description || L.nutrition.mealDescription,
+    nutrition: L.nutrition,
+    dose: L.dose,
+    savedAt: new Date().toISOString()
+  }
+  state.favourites.unshift(fav)
+  if (state.favourites.length > 20) state.favourites = state.favourites.slice(0, 20)
+  save()
+  render()
+}
+
+function useFavourite(id) {
+  const fav = state.favourites.find(f => f.id === id)
+  if (!fav) return
+  // Pre-fill result directly from favourite — no AI call needed
+  state.log.description = fav.description
+  state.log.nutrition = { ...fav.nutrition }
+  state.log.dose = calcDose(fav.nutrition.carbs, state.settings.icr, fav.nutrition.isSplit, state.log.currentGlucose)
+  state.log.phase = 'pre-glucose'
+  render()
+}
+
+function deleteFavourite(id) {
+  state.favourites = state.favourites.filter(f => f.id !== id)
+  save()
+  render()
+}
+
+// ── NARRATIVE ─────────────────────────────────────────────────
+async function generateNarrative() {
+  if (state.meals.length < 3) { alert('Log at least 3 meals to generate insights.'); return }
+  state.narrative.loading = true
+  render()
+  try {
+    const summary = state.meals.slice(0, 30).map(m => ({
+      meal: m.nutrition.mealDescription,
+      carbs: m.nutrition.carbs,
+      fat: m.nutrition.fat,
+      dose: m.dose.total,
+      split: m.dose.split,
+      gi: m.nutrition.glycemicIndex,
+      preGlu: m.preGlucose?.value,
+      postGlu: m.postGlucose?.value,
+      rise: m.preGlucose && m.postGlucose ? m.postGlucose.value - m.preGlucose.value : null,
+      time: new Date(m.timestamp).getHours()
+    }))
+    const prompt = `You are a diabetes clinical nutritionist reviewing a Type 1 diabetic's meal logs. Analyse these ${summary.length} meals and write a concise, practical 3–4 paragraph narrative report covering: (1) eating patterns and carb distribution, (2) glucose response trends if data available, (3) split dose frequency and whether it seems appropriate, (4) one specific actionable recommendation. Write in plain English, be direct, be specific with numbers. DO NOT use bullet points or headers. Meal data: ${JSON.stringify(summary)}`
+    const text = await callGemini([{ text: prompt }])
+    state.narrative = { text, loading: false, generatedAt: new Date().toISOString() }
+    save()
+  } catch(e) {
+    state.narrative.loading = false
+    alert('Could not generate insights: ' + e.message)
+  }
+  render()
+}
+
+// ── PDF EXPORT ────────────────────────────────────────────────
+function exportPDF() {
+  const meals = state.meals
+  if (!meals.length) { alert('No meals to export.'); return }
+
+  const now = new Date()
+  const thirtyAgo = new Date(now); thirtyAgo.setDate(thirtyAgo.getDate()-30)
+  const recent = meals.filter(m => new Date(m.timestamp) > thirtyAgo)
+  const avg = arr => arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length*10)/10 : 0
+
+  const avgCarbs = avg(recent.map(m => m.nutrition.carbs))
+  const avgDose  = avg(recent.map(m => m.dose.total))
+  const splits   = recent.filter(m => m.dose.split).length
+  const withGlu  = recent.filter(m => m.preGlucose && m.postGlucose)
+  const avgRise  = avg(withGlu.map(m => m.postGlucose.value - m.preGlucose.value))
+
+  const rows = recent.slice(0,50).map(m => `
+    <tr>
+      <td>${new Date(m.timestamp).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</td>
+      <td>${new Date(m.timestamp).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</td>
+      <td>${(m.description||m.nutrition.mealDescription||'').substring(0,35)}</td>
+      <td>${m.nutrition.carbs}g</td>
+      <td>${m.nutrition.fat}g</td>
+      <td>${m.dose.total}u${m.dose.split?' ⚡':''}</td>
+      <td>${m.preGlucose?.value||'—'}</td>
+      <td>${m.postGlucose?.value||'—'}</td>
+      <td>${m.preGlucose&&m.postGlucose?'+'+(m.postGlucose.value-m.preGlucose.value):'—'}</td>
+    </tr>`).join('')
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>CarbLens Report — ${now.toLocaleDateString('en-GB')}</title>
+  <style>
+    body{font-family:Arial,sans-serif;margin:32px;color:#111;font-size:12px}
+    h1{font-size:20px;margin-bottom:4px}
+    .sub{color:#666;margin-bottom:24px;font-size:12px}
+    .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+    .sc{background:#f5f5f5;border-radius:8px;padding:12px;text-align:center}
+    .sv{font-size:22px;font-weight:bold;color:#0d5c2b}
+    .sl{font-size:10px;color:#666;margin-top:2px;text-transform:uppercase}
+    table{width:100%;border-collapse:collapse;font-size:11px}
+    th{background:#0d5c2b;color:white;padding:7px 8px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.5px}
+    td{padding:6px 8px;border-bottom:1px solid #eee}
+    tr:nth-child(even) td{background:#f9f9f9}
+    .disclaimer{margin-top:24px;font-size:10px;color:#999;border-top:1px solid #eee;padding-top:12px}
+    @media print{body{margin:16px}}
+  </style></head><body>
+  <h1>CarbLens Diabetes Report</h1>
+  <div class="sub">Generated ${now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'})} · Last 30 days · ${recent.length} meals · ICR 1:${state.settings.icr}</div>
+  <div class="summary">
+    <div class="sc"><div class="sv">${avgCarbs}g</div><div class="sl">Avg carbs/meal</div></div>
+    <div class="sc"><div class="sv">${avgDose}u</div><div class="sl">Avg insulin dose</div></div>
+    <div class="sc"><div class="sv">${splits}</div><div class="sl">Split dose meals</div></div>
+    <div class="sc"><div class="sv">${withGlu.length?'+'+avgRise:'—'}</div><div class="sl">Avg glucose rise</div></div>
+  </div>
+  <table>
+    <thead><tr><th>Date</th><th>Time</th><th>Meal</th><th>Carbs</th><th>Fat</th><th>Dose</th><th>Pre</th><th>Post</th><th>Rise</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <div class="disclaimer">This report is generated by CarbLens for personal reference only. Always verify insulin doses with your healthcare provider. CarbLens does not replace medical advice.</div>
+  </body></html>`
+
+  const blob = new Blob([html], {type:'text/html'})
+  const url = URL.createObjectURL(blob)
+  const w = window.open(url, '_blank')
+  if (w) { setTimeout(() => { w.print(); URL.revokeObjectURL(url) }, 800) }
+  else {
+    // Fallback — download as HTML file (user can open and print)
+    const a = document.createElement('a')
+    a.href = url; a.download = `carblens-report-${now.toISOString().slice(0,10)}.html`
+    a.click(); URL.revokeObjectURL(url)
+  }
+}
+
+// ── RESTORE BACKUP ────────────────────────────────────────────
+function restoreBackup(input) {
+  const file = input.files[0]
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = e => {
+    try {
+      const d = JSON.parse(e.target.result)
+      if (!d.meals || !Array.isArray(d.meals)) throw new Error('Invalid backup file')
+      if (!confirm(`Restore ${d.meals.length} meals from backup? This will merge with your existing ${state.meals.length} meals.`)) return
+      // Merge — deduplicate by id
+      const existing = new Set(state.meals.map(m => m.id))
+      const newMeals = d.meals.filter(m => !existing.has(m.id))
+      state.meals = [...state.meals, ...newMeals].sort((a,b) => new Date(b.timestamp)-new Date(a.timestamp))
+      if (d.settings) state.settings = { ...state.settings, ...d.settings }
+      if (d.favourites) state.favourites = [...(state.favourites||[]), ...(d.favourites||[])]
+      save()
+      render()
+      alert(`✓ Restored ${newMeals.length} new meals.`)
+    } catch(err) {
+      alert('Could not restore backup: ' + err.message)
+    }
+  }
+  reader.readAsText(file)
+}
+
+// ── CORRECTION SETTINGS ───────────────────────────────────────
+function saveCorrectionSettings() {
+  const isf = parseFloat(document.getElementById('isfInput')?.value)
+  const target = parseFloat(document.getElementById('targetGluInput')?.value)
+  if (!isNaN(isf) && isf > 0) state.settings.isf = isf
+  if (!isNaN(target) && target > 0) state.settings.targetGlucose = target
+  save()
+  const btn = document.getElementById('saveCorrBtn')
+  if (btn) { btn.textContent = '✓ Saved'; setTimeout(() => { btn.textContent = 'Save' }, 2000) }
 }
 
 // ── REFINE ────────────────────────────────────────────────────
