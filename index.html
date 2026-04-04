@@ -465,7 +465,7 @@ function calcDose(carbs, icr, isSplit) {
 async function callGemini(parts) {
   const key = localStorage.getItem('cl_gemini_key') || ''
   if (!key) throw new Error('No Gemini API key set. Go to Settings → paste your key from aistudio.google.com')
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`
   const body = { contents: [{ parts }] }
   const r = await fetch(url, {
     method: 'POST',
