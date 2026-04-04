@@ -387,10 +387,7 @@ textarea.field{resize:none;line-height:1.5}
 
 <script>
 // ── STATE ──────────────────────────────────────────────────────
-// ── PROXY CONFIG ─────────────────────────────────────────────
-// Replace with your Cloudflare Worker URL after setup
-// e.g. 'https://carblens-proxy.yourname.workers.dev'
-const PROXY_URL = localStorage.getItem('cl_proxy_url') || ''
+// ── GEMINI CONFIG — key stored in localStorage as cl_gemini_key ──
 
 let state = {
   page: 'log',
@@ -465,24 +462,22 @@ function calcDose(carbs, icr, isSplit) {
   return { total, split: false }
 }
 
-async function callClaude(messages, systemPrompt) {
-  const proxyUrl = localStorage.getItem('cl_proxy_url') || ''
-  if (!proxyUrl) throw new Error('No proxy URL set. Go to Settings → enter your Cloudflare Worker URL.')
-  const body = { model: 'claude-sonnet-4-20250514', max_tokens: 1200, messages }
-  if (systemPrompt) body.system = systemPrompt
-  const r = await fetch(proxyUrl, {
+async function callGemini(parts) {
+  const key = localStorage.getItem('cl_gemini_key') || ''
+  if (!key) throw new Error('No Gemini API key set. Go to Settings → paste your key from aistudio.google.com')
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`
+  const body = { contents: [{ parts }] }
+  const r = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
   })
-  if (!r.ok) {
-    let detail = ''
-    try { const e = await r.clone().json(); detail = e.error?.message || e.error?.type || '' } catch(e) {}
-    throw new Error('Error ' + r.status + (detail ? ': ' + detail : ' — check your Worker URL and API key in Settings'))
-  }
   const d = await r.json()
-  if (d.error) throw new Error('Anthropic error: ' + (d.error.message || d.error.type || JSON.stringify(d.error)))
-  return d.content[0].text.trim().replace(/```json|```/g, '').trim()
+  if (!r.ok || d.error) {
+    const msg = d.error?.message || JSON.stringify(d.error || d)
+    throw new Error('Gemini error: ' + msg)
+  }
+  return d.candidates[0].content.parts[0].text.trim().replace(/```json|```/g, '').trim()
 }
 
 const NUTRITION_PROMPT = (meal, extra) => `You are a clinical nutrition AI for a Type 1 diabetic on a basal-bolus insulin regimen. Analyze this meal and return ONLY a JSON object — no markdown, no explanation, no preamble.
@@ -531,7 +526,7 @@ notes: include GI warnings, hidden carb sources, portion size assumptions, diabe
 confidence: high=well-known dish with known values, medium=estimated, low=very vague description.`
 
 async function analyzeText(description, icr, extraContext) {
-  const txt = await callClaude([{ role: 'user', content: NUTRITION_PROMPT(description, extraContext) }])
+  const txt = await callGemini([{ text: NUTRITION_PROMPT(description, extraContext) }])
   const p = JSON.parse(txt)
   return {
     nutrition: { ...p, isSplit: p.splitDose, splitReason: p.splitReason },
@@ -565,10 +560,10 @@ If you CANNOT analyze confidently (image unclear, unidentifiable contents), retu
 
 SPLIT DOSE: Set splitDose:true for any meal that is fatty, slow-cooked, creamy, fried, or has combined high fat+carb load. See: pizza, pasta, curries, biryani, naan with curry, slow-cooked meats, fried foods, rich desserts, anything with visible oil/ghee/cream. When in doubt on a rich meal, default to true.`
 
-  const txt = await callClaude([{ role: 'user', content: [
-    { type: 'image', source: { type: 'base64', media_type: mime, data: b64 } },
-    { type: 'text', text: prompt }
-  ]}])
+  const txt = await callGemini([
+    { inline_data: { mime_type: mime, data: b64 } },
+    { text: prompt }
+  ])
   const p = JSON.parse(txt)
   if (p.status === 'needs_clarification') return { needsClarification: { questions: p.questions, partial: p.partialDescription } }
   return {
@@ -687,7 +682,6 @@ async function syncToDrive() {
   const lbl = document.getElementById('syncLbl')
   ico.innerHTML = '<span class="spin">⟳</span>'
   lbl.textContent = '...'
-  btn.className = 'sync-btn'
   try {
     const exportData = {
       meals: state.meals.map(m => ({ ...m, imageB64: m.imageB64 ? '[photo-omitted]' : null })),
@@ -695,21 +689,16 @@ async function syncToDrive() {
       exportedAt: new Date().toISOString(),
       totalMeals: state.meals.length
     }
-    const proxyUrl = localStorage.getItem('cl_proxy_url') || ''
-    if (!proxyUrl) throw new Error('No proxy URL set')
-    const r = await fetch(proxyUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514', max_tokens: 500,
-        mcp_servers: [{ type: 'url', url: 'https://gmail.mcp.claude.com/mcp', name: 'gmail' }],
-        messages: [{ role: 'user', content: `Create a Gmail draft to myself with subject "CarbLens Backup — ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}" and body: "CarbLens meal history backup.\n\nMeals: ${exportData.totalMeals}\nExported: ${exportData.exportedAt}\n\nData:\n${JSON.stringify(exportData, null, 2).substring(0, 8000)}"` }]
-      })
-    })
-    if (r.ok) {
-      ico.textContent = '✓'; lbl.textContent = 'Saved'; btn.className = 'sync-btn ok'
-    } else throw new Error()
-  } catch {
+    const json = JSON.stringify(exportData, null, 2)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `carblens-backup-${new Date().toISOString().slice(0,10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    ico.textContent = '✓'; lbl.textContent = 'Saved'; btn.className = 'sync-btn ok'
+  } catch(e) {
     ico.textContent = '!'; lbl.textContent = 'Error'; btn.className = 'sync-btn err'
   }
   setTimeout(() => { ico.textContent = '☁'; lbl.textContent = 'Sync'; btn.className = 'sync-btn' }, 3000)
@@ -1131,13 +1120,13 @@ function renderSettings() {
     </div>
 
     <div class="set-sec">
-      <div class="set-ttl">API Proxy URL</div>
-      <p style="font-size:12px;font-family:var(--mono);color:var(--muted)">Your Cloudflare Worker URL — required for the app to work.</p>
-      <input class="field" id="proxyInput" type="url" placeholder="https://carblens-proxy.yourname.workers.dev" value="${localStorage.getItem('cl_proxy_url')||''}">
-      <button class="btn-sm" id="saveProxyBtn" style="align-self:flex-start" onclick="saveProxy()">Save URL</button>
-      ${localStorage.getItem('cl_proxy_url')
-        ? `<div style="font-size:11px;font-family:var(--mono);color:var(--accent)">✓ Proxy configured</div>`
-        : `<div style="font-size:11px;font-family:var(--mono);color:var(--warn)">⚠ Not configured — AI analysis won't work</div>`
+      <div class="set-ttl">Gemini API Key</div>
+      <p style="font-size:12px;font-family:var(--mono);color:var(--muted)">Free key from <a class="lnk" href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a> — required for AI analysis.</p>
+      <input class="field" id="geminiKeyInput" type="password" placeholder="AIza..." value="${localStorage.getItem('cl_gemini_key')||''}">
+      <button class="btn-sm" id="saveGeminiBtn" style="align-self:flex-start" onclick="saveGeminiKey()">Save Key</button>
+      ${localStorage.getItem('cl_gemini_key')
+        ? `<div style="font-size:11px;font-family:var(--mono);color:var(--accent)">✓ API key configured</div>`
+        : `<div style="font-size:11px;font-family:var(--mono);color:var(--warn)">⚠ No key set — AI analysis won't work</div>`
       }
     </div>
 
@@ -1165,11 +1154,11 @@ function renderSettings() {
       <div class="integ-card">
         <div class="integ-hdr">
           <span class="integ-ico">☁️</span>
-          <div><strong>Gmail Draft Backup</strong><p>Saves history as a Gmail draft</p></div>
+          <div><strong>Local Backup</strong><p>Downloads history as a JSON file</p></div>
           <span class="integ-st on">Ready</span>
         </div>
-        <div class="integ-note small">Tap Sync in the header to save your meal history to Gmail. Access it from any device by searching "CarbLens Backup" in Gmail.</div>
-        <button class="btn-ghost" onclick="syncToDrive()" style="align-self:flex-start">Sync now →</button>
+        <div class="integ-note small">Tap the ☁ button in the header to download your meal history as a JSON file. Save it to Google Drive, email it to yourself, or restore it on another device.</div>
+        <button class="btn-ghost" onclick="syncToDrive()" style="align-self:flex-start">Download backup →</button>
       </div>
     </div>
 
@@ -1360,15 +1349,14 @@ function saveICR() {
   if (btn) { btn.textContent = '✓ Saved'; setTimeout(() => { btn.textContent = 'Save ICR' }, 2000) }
 }
 
-function saveProxy() {
-  const inp = document.getElementById('proxyInput')
+function saveGeminiKey() {
+  const inp = document.getElementById('geminiKeyInput')
   if (!inp) return
-  const url = inp.value.trim().replace(/\/+$/, '') // strip trailing slash
-  if (!url) { localStorage.removeItem('cl_proxy_url'); render(); return }
-  if (!url.startsWith('https://')) { inp.style.borderColor = 'var(--danger)'; return }
-  localStorage.setItem('cl_proxy_url', url)
-  const btn = document.getElementById('saveProxyBtn')
-  if (btn) { btn.textContent = '✓ Saved'; setTimeout(() => { btn.textContent = 'Save URL'; render() }, 1500) }
+  const key = inp.value.trim()
+  if (!key) { localStorage.removeItem('cl_gemini_key'); render(); return }
+  localStorage.setItem('cl_gemini_key', key)
+  const btn = document.getElementById('saveGeminiBtn')
+  if (btn) { btn.textContent = '✓ Saved'; setTimeout(() => { btn.textContent = 'Save Key'; render() }, 1500) }
   render()
 }
 
