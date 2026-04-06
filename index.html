@@ -666,10 +666,28 @@ function calcDose(carbs, icr, isSplit, currentGlucose) {
   return { total: totalDose, foodDose, correctionDose, split: false }
 }
 
+// ── CLIENT-SIDE IMAGE COMPRESSION ────────────────────────────────────────────
+async function compressImage(b64, mime) {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.onload = () => {
+      const MAX = 1024
+      let w = img.width, h = img.height
+      if (w > MAX) { h = Math.round(h * MAX / w); w = MAX }
+      const canvas = document.createElement('canvas')
+      canvas.width = w; canvas.height = h
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h)
+      resolve(canvas.toDataURL('image/jpeg', 0.82).split(',')[1])
+    }
+    img.onerror = () => resolve(b64) // fallback: use original if compression fails
+    img.src = `data:${mime || 'image/jpeg'};base64,` + b64
+  })
+}
+
 async function callGemini(parts) {
   const key = localStorage.getItem('cl_gemini_key') || ''
   if (!key) throw new Error('No Gemini API key set. Go to Settings → paste your key from aistudio.google.com')
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${key}`
   const body = { contents: [{ parts }] }
   const r = await fetch(url, {
     method: 'POST',
@@ -764,8 +782,9 @@ If you CANNOT analyze confidently (image unclear, unidentifiable contents), retu
 
 SPLIT DOSE: Set splitDose:true for any meal that is fatty, slow-cooked, creamy, fried, or has combined high fat+carb load. See: pizza, pasta, curries, biryani, naan with curry, slow-cooked meats, fried foods, rich desserts, anything with visible oil/ghee/cream. When in doubt on a rich meal, default to true.`
 
+  const compressed = await compressImage(b64, mime)
   const txt = await callGemini([
-    { inline_data: { mime_type: mime, data: b64 } },
+    { inline_data: { mime_type: 'image/jpeg', data: compressed } },
     { text: prompt }
   ])
   const p = JSON.parse(txt)
@@ -1745,7 +1764,7 @@ function renderSettings() {
       <div class="about-card">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
           <span><b>CarbLens</b> — Insulin Intelligence</span>
-          <span style="font-size:10px;background:var(--accent-d);color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:2px 8px;white-space:nowrap;margin-left:8px">v2026-04-06 07:56 UTC</span>
+          <span style="font-size:10px;background:var(--accent-d);color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:2px 8px;white-space:nowrap;margin-left:8px">v2026-04-06 08:15 UTC</span>
         </div>
         <span>AI-powered meal analysis with ICR-based insulin dosing. Designed for Type 1 diabetes management.</span>
         <div style="display:flex;align-items:center;gap:6px;padding-top:4px;border-top:1px solid var(--border);margin-top:4px">
@@ -1783,10 +1802,12 @@ function handleFile(input) {
   const file = input.files[0]
   if (!file) return
   const reader = new FileReader()
-  reader.onload = e => {
-    const result = e.target.result
-    state.log.imageB64 = result.split(',')[1]
-    state.log.imageMime = file.type
+  reader.onload = async e => {
+    const raw = e.target.result.split(',')[1]
+    const mime = file.type || 'image/jpeg'
+    // Compress immediately on load — keeps stored image small too
+    state.log.imageB64 = await compressImage(raw, mime)
+    state.log.imageMime = 'image/jpeg'
     render()
   }
   reader.readAsDataURL(file)
@@ -1797,9 +1818,11 @@ function handleDrop(e) {
   const file = e.dataTransfer.files[0]
   if (!file) return
   const reader = new FileReader()
-  reader.onload = ev => {
-    state.log.imageB64 = ev.target.result.split(',')[1]
-    state.log.imageMime = file.type
+  reader.onload = async ev => {
+    const raw = ev.target.result.split(',')[1]
+    const mime = file.type || 'image/jpeg'
+    state.log.imageB64 = await compressImage(raw, mime)
+    state.log.imageMime = 'image/jpeg'
     render()
   }
   reader.readAsDataURL(file)
