@@ -74,21 +74,21 @@
 <style>
 :root {
   --bg: #09100d;
-  --surface: #101a14;
-  --surface2: #152019;
-  --border: #1c2e22;
-  --border-b: #263d2e;
-  --text: #e4ede6;
-  --muted: #6e9278;
-  --dim: #3d5c47;
+  --surface: #111b15;
+  --surface2: #172118;
+  --border: #213527;
+  --border-b: #2e4836;
+  --text: #edf5ef;        /* brighter white — easier in sunlight */
+  --muted: #92b89e;       /* was #6e9278 — lifted ~30% lightness */
+  --dim: #6a9478;         /* was #3d5c47 — lifted significantly, used for taglines/labels */
   --accent: #3ddc6e;
   --accent-d: #0f2d1a;
   --accent-g: rgba(61,220,110,0.12);
-  --warn: #f5c842;
+  --warn: #f7cc4a;        /* slightly brighter amber */
   --warn-d: #2e2408;
-  --danger: #f07070;
+  --danger: #f47878;
   --danger-d: #2e0f0f;
-  --split: #5fa8f5;
+  --split: #6ab4f7;       /* slightly brighter blue */
   --split-d: #0c1e35;
   --r: 14px;
   --mono: 'DM Mono', monospace;
@@ -1764,7 +1764,7 @@ function renderSettings() {
       <div class="about-card">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
           <span><b>CarbLens</b> — Insulin Intelligence</span>
-          <span style="font-size:10px;background:var(--accent-d);color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:2px 8px;white-space:nowrap;margin-left:8px">v2026-04-06 08:15 UTC</span>
+          <span style="font-size:10px;background:var(--accent-d);color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:2px 8px;white-space:nowrap;margin-left:8px">v2026-04-06 08:24 UTC</span>
         </div>
         <span>AI-powered meal analysis with ICR-based insulin dosing. Designed for Type 1 diabetes management.</span>
         <div style="display:flex;align-items:center;gap:6px;padding-top:4px;border-top:1px solid var(--border);margin-top:4px">
