@@ -1,0 +1,2790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>CarbLens</title>
+<meta name="application-name" content="CarbLens">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CarbLens">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#09100d">
+<meta name="description" content="Insulin intelligence — AI meal analysis with ICR-based dosing">
+<link rel="apple-touch-icon" id="appIcon">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script>
+(function() {
+  try {
+    var size = 512;
+    var canvas = document.createElement('canvas');
+    canvas.width = size; canvas.height = size;
+    var ctx = canvas.getContext('2d');
+    var bg = ctx.createLinearGradient(0, 0, size, size);
+    bg.addColorStop(0, '#09100d');
+    bg.addColorStop(1, '#0f2d1a');
+    ctx.fillStyle = bg;
+    if (ctx.roundRect) { ctx.roundRect(0,0,size,size,100); ctx.fill(); }
+    else { ctx.fillRect(0,0,size,size); }
+    ctx.strokeStyle = '#3ddc6e';
+    ctx.lineWidth = 18;
+    ctx.beginPath();
+    ctx.arc(size/2, size/2, 195, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.strokeStyle = '#5fa8f5';
+    ctx.lineWidth = 10;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.arc(size/2, size/2, 165, -Math.PI*0.8, Math.PI*0.1);
+    ctx.stroke();
+    ctx.fillStyle = '#3ddc6e';
+    ctx.font = 'bold 260px Helvetica,Arial,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('C', size/2+14, size/2+8);
+    ctx.fillStyle = '#5fa8f5';
+    ctx.beginPath();
+    ctx.arc(size/2+98, size/2-88, 28, 0, Math.PI*2);
+    ctx.fill();
+    var iconURI = canvas.toDataURL('image/png');
+    document.getElementById('appIcon').href = iconURI;
+    var manifest = {
+      name: 'CarbLens',
+      short_name: 'CarbLens',
+      description: 'AI meal analysis with ICR-based insulin dosing',
+      start_url: '.',
+      display: 'standalone',
+      orientation: 'portrait',
+      background_color: '#09100d',
+      theme_color: '#09100d',
+      icons: [
+        {src: iconURI, sizes:'512x512', type:'image/png', purpose:'any maskable'},
+        {src: iconURI, sizes:'192x192', type:'image/png', purpose:'any maskable'}
+      ]
+    };
+    var blob = new Blob([JSON.stringify(manifest)], {type:'application/manifest+json'});
+    var murl = URL.createObjectURL(blob);
+    var lnk = document.createElement('link');
+    lnk.rel = 'manifest'; lnk.href = murl;
+    document.head.appendChild(lnk);
+  } catch(e) { console.warn('PWA manifest failed', e); }
+})();
+</script>
+<style>
+:root {
+  --bg: #09100d;
+  --surface: #111b15;
+  --surface2: #172118;
+  --border: #213527;
+  --border-b: #2e4836;
+  --text: #edf5ef;        /* brighter white — easier in sunlight */
+  --muted: #92b89e;       /* was #6e9278 — lifted ~30% lightness */
+  --dim: #6a9478;         /* was #3d5c47 — lifted significantly, used for taglines/labels */
+  --accent: #3ddc6e;
+  --accent-d: #0f2d1a;
+  --accent-g: rgba(61,220,110,0.12);
+  --warn: #f7cc4a;        /* slightly brighter amber */
+  --warn-d: #2e2408;
+  --danger: #f47878;
+  --danger-d: #2e0f0f;
+  --split: #6ab4f7;       /* slightly brighter blue */
+  --split-d: #0c1e35;
+  --r: 14px;
+  --mono: 'DM Mono', monospace;
+  --sans: 'Syne', sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+button{cursor:pointer;font-family:var(--sans);border:none;background:none}
+
+/* SHELL */
+.shell{display:flex;flex-direction:column;min-height:100vh;max-width:480px;margin:0 auto}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;border-bottom:1px solid var(--border);background:rgba(9,16,13,0.92);backdrop-filter:blur(12px);position:sticky;top:0;z-index:100}
+.logo{font-size:20px;font-weight:800;color:var(--accent);letter-spacing:-0.5px}
+.tagline{font-size:9px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;font-family:var(--mono);margin-top:1px}
+.hdr-r{display:flex;align-items:center;gap:9px}
+.icr-pill{background:var(--accent-d);border:1px solid var(--accent);color:var(--accent);font-family:var(--mono);font-size:12px;font-weight:500;padding:4px 11px;border-radius:100px;cursor:pointer;transition:.2s all}
+.icr-pill:hover{background:var(--accent);color:var(--bg)}
+.sync-btn{display:flex;align-items:center;gap:5px;background:var(--surface);border:1px solid var(--border);color:var(--dim);border-radius:8px;font-family:var(--mono);font-size:10px;padding:5px 9px;transition:.2s}
+.sync-btn.ok{border-color:var(--accent);color:var(--accent)}
+.sync-btn.err{border-color:var(--danger);color:var(--danger)}
+.main{flex:1;overflow-y:auto;padding-bottom:78px}
+
+/* NAV */
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;display:flex;background:var(--surface);border-top:1px solid var(--border);padding:6px 0 calc(6px + env(safe-area-inset-bottom,0px))}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;color:var(--dim);transition:.2s color}
+.ni.on{color:var(--accent)}
+.ni-ic{font-size:17px;display:flex;align-items:center;justify-content:center;height:22px}
+.ni-ic svg{width:21px;height:21px;display:block}
+.ni-lb{font-size:9px;font-family:var(--mono);letter-spacing:.5px}
+
+/* PAGE COMMON */
+.pg{padding:20px 18px;animation:fadein .25s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.pg-title{font-size:22px;font-weight:800;margin-bottom:4px}
+.pg-sub{font-size:11px;font-family:var(--mono);color:var(--dim);margin-bottom:18px}
+
+/* INPUTS */
+.field{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:var(--sans);font-size:15px;padding:13px 15px;transition:.2s border-color}
+.field:focus{outline:none;border-color:var(--accent)}
+.field::placeholder{color:var(--dim)}
+textarea.field{resize:none;line-height:1.5}
+.num-field{background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--accent);font-family:var(--mono);font-size:22px;font-weight:500;padding:11px 14px;text-align:center;width:100%;transition:.2s border-color}
+.num-field:focus{outline:none;border-color:var(--accent)}
+
+/* BUTTONS */
+.btn-main{width:100%;background:var(--accent);color:var(--bg);border-radius:var(--r);font-weight:700;font-size:16px;padding:15px;transition:.2s all;letter-spacing:-.3px}
+.btn-main:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 28px var(--accent-g)}
+.btn-main:disabled{opacity:.4;cursor:not-allowed}
+.btn-sec{background:var(--surface);border:1px solid var(--border);color:var(--muted);border-radius:10px;font-size:14px;padding:11px 15px;transition:.2s}
+.btn-sec:hover{border-color:var(--muted);color:var(--text)}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--muted);border-radius:9px;font-family:var(--mono);font-size:11px;padding:7px 13px;transition:.15s}
+.btn-ghost:hover{border-color:var(--muted);color:var(--text)}
+.btn-sm{background:var(--accent);color:var(--bg);border-radius:9px;font-weight:700;font-size:13px;padding:9px 13px;transition:.2s;white-space:nowrap}
+.btn-sm:disabled{opacity:.4;cursor:not-allowed}
+
+/* DIVIDER */
+.or-div{display:flex;align-items:center;gap:11px;color:var(--dim);font-family:var(--mono);font-size:10px;letter-spacing:2px}
+.or-div::before,.or-div::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* PHOTO ZONE */
+.photo-zone{border:1.5px dashed var(--border-b);border-radius:var(--r);overflow:hidden;background:var(--surface)}
+.photo-zone.has-img{display:flex;flex-direction:column}
+.ph-preview img{width:100%;max-height:220px;object-fit:cover;display:block}
+.ph-rm-bar{width:100%;background:var(--danger-d);border:none;border-top:1px solid var(--danger);color:var(--danger);font-family:var(--mono);font-size:12px;padding:10px;cursor:pointer;text-align:center;transition:.15s}
+.ph-rm-bar:hover{background:var(--danger);color:#fff}
+.photo-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.photo-btn-wrap{position:relative;border:1.5px dashed var(--border-b);border-radius:var(--r);background:var(--surface);overflow:hidden;transition:.2s}
+.photo-btn-wrap:active{background:var(--accent-g);border-color:var(--accent)}
+.ph-btn-inner{display:flex;flex-direction:column;align-items:center;gap:8px;padding:22px 16px;color:var(--muted);font-family:var(--mono);font-size:12px;pointer-events:none;text-align:center}
+.ph-btn-ico{font-size:28px;display:flex;align-items:center;justify-content:center}
+.ph-btn-ico svg{width:26px;height:26px;display:block}
+.ph-file-inp{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:0}
+
+/* ERROR */
+.err-box{background:var(--danger-d);border:1px solid var(--danger);border-radius:10px;color:var(--danger);padding:11px 15px;font-size:12px;font-family:var(--mono);line-height:1.5}
+
+/* DOSE SAFETY WARNING */
+.dose-warn{background:var(--danger-d);border:1.5px solid var(--danger);border-radius:var(--r);padding:13px 15px}
+.dose-warn-hdr{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--danger);margin-bottom:8px}
+.dose-warn ul{list-style:none;display:flex;flex-direction:column;gap:6px}
+.dose-warn li{font-size:12px;font-family:var(--mono);color:var(--danger);line-height:1.5;padding-left:14px;position:relative}
+.dose-warn li::before{content:'›';position:absolute;left:0}
+
+/* LOADING */
+.dots span{animation:blink 1.2s infinite}
+.dots span:nth-child(2){animation-delay:.2s}
+.dots span:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:0}40%{opacity:1}}
+
+/* GLUCOSE PHASE */
+.center-phase{display:flex;flex-direction:column;align-items:center;text-align:center;padding:36px 20px;gap:20px}
+.phase-ico{font-size:44px}
+.phase-h{font-size:22px;font-weight:700}
+.phase-p{font-size:13px;font-family:var(--mono);color:var(--muted)}
+.gluco-row{display:flex;gap:8px;align-items:center;width:100%;max-width:300px}
+.gluco-row input{flex:1}
+
+/* CLARIFY */
+.clarify-q{display:flex;flex-direction:column;gap:8px;margin-bottom:4px}
+.clarify-q label{font-size:14px;font-weight:600}
+.choices{display:flex;gap:7px;flex-wrap:wrap}
+.ch-btn{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:var(--mono);font-size:12px;padding:7px 14px;transition:.15s}
+.ch-btn.on{background:var(--accent-d);border-color:var(--accent);color:var(--accent)}
+
+/* RESULT */
+.result-img{border-radius:var(--r);overflow:hidden;max-height:220px}
+.result-img img{width:100%;height:100%;object-fit:cover}
+.result-name{font-size:17px;font-weight:700;margin-bottom:7px}
+.badges{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:6px}
+.badge{border:1px solid;border-radius:100px;padding:3px 10px;font-size:10px;font-family:var(--mono);font-weight:500}
+
+/* DOSE CARD */
+.dose-card{border-radius:var(--r);padding:18px;border:1.5px solid;margin-bottom:2px}
+.dose-card.std{background:var(--accent-d);border-color:var(--accent)}
+.dose-card.spl{background:var(--split-d);border-color:var(--split)}
+.dose-hdr{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:13px}
+.dose-card.std .dose-hdr{color:var(--accent)}
+.dose-card.spl .dose-hdr{color:var(--split)}
+.dose-big{font-size:54px;font-weight:800;color:var(--accent);line-height:1}
+.dose-lbl{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.dose-row{display:flex;align-items:baseline;gap:8px}
+.split-grid{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.split-item{flex:1;display:flex;flex-direction:column;align-items:center;background:rgba(95,168,245,.1);border-radius:10px;padding:13px}
+.split-u{font-size:38px;font-weight:800;color:var(--split);line-height:1}
+.split-lb{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px}
+.split-plus{font-size:18px;color:var(--dim)}
+.split-tot{font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:.5px}
+.split-why{font-size:11px;font-family:var(--mono);color:var(--muted);margin-top:9px;border-top:1px solid rgba(95,168,245,.2);padding-top:9px;line-height:1.5}
+
+/* NUTRITION GRID */
+.nut-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.nut-cell{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 9px;display:flex;flex-direction:column;align-items:center;gap:3px}
+.nut-cell.hi{background:var(--accent-d);border-color:var(--accent)}
+.nut-val{font-size:19px;font-weight:700}
+.nut-cell.hi .nut-val{color:var(--accent)}
+.nut-u{font-size:10px;font-family:var(--mono);color:var(--dim)}
+.nut-lb{font-size:9px;font-family:var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
+
+/* GLUCOSE CARD */
+.gluco-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:15px;display:flex;flex-direction:column;gap:11px}
+.gr{display:flex;justify-content:space-between;align-items:center}
+.gr-lbl{font-size:11px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.gr-val{font-size:16px;font-weight:700;font-family:var(--mono)}
+.gr.ok .gr-val{color:var(--accent)}
+
+/* NOTES */
+.notes-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:15px}
+.notes-ttl{font-size:10px;font-family:var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:9px}
+.notes-card ul{list-style:none;display:flex;flex-direction:column;gap:5px}
+.notes-card li{font-size:12px;font-family:var(--mono);color:var(--muted);padding-left:14px;position:relative;line-height:1.45}
+.notes-card li::before{content:'→';position:absolute;left:0;color:var(--warn)}
+
+/* HISTORY */
+.day-grp{margin-bottom:22px}
+.day-lbl{font-size:10px;font-family:var(--mono);color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+.hcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:7px;overflow:hidden;cursor:pointer;transition:.2s border-color}
+.hcard:hover,.hcard.exp{border-color:var(--border-b)}
+.hcard-hdr{display:flex;align-items:center;justify-content:space-between;padding:13px 15px}
+.hcard-l{display:flex;align-items:center;gap:11px;flex:1;min-width:0}
+.h-thumb{width:42px;height:42px;object-fit:cover;border-radius:8px;flex-shrink:0}
+.h-info{display:flex;flex-direction:column;gap:2px;min-width:0}
+.h-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.h-time{font-size:10px;font-family:var(--mono);color:var(--dim)}
+.hcard-r{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0;margin-left:10px}
+.h-carbs{font-size:13px;font-weight:700;color:var(--accent);font-family:var(--mono)}
+.h-dose{font-size:11px;font-family:var(--mono);color:var(--muted)}
+.h-dose.sp{color:var(--split)}
+.hcard-body{padding:0 15px 15px;border-top:1px solid var(--border);padding-top:13px;display:flex;flex-direction:column;gap:10px}
+.h-full-img img{width:100%;max-height:170px;object-fit:cover;border-radius:9px}
+.h-nut-row{display:flex;gap:5px;flex-wrap:wrap}
+.hnut{background:var(--surface2);border-radius:7px;padding:5px 9px;display:flex;flex-direction:column;align-items:center;gap:1px;flex:1;min-width:48px}
+.hnut-v{font-size:12px;font-weight:700;font-family:var(--mono)}
+.hnut-l{font-size:8px;font-family:var(--mono);color:var(--dim);text-transform:uppercase}
+.h-split-note{background:var(--split-d);border:1px solid var(--split);border-radius:7px;padding:7px 11px;font-size:11px;font-family:var(--mono);color:var(--split)}
+.h-gluco{display:flex;gap:12px;font-size:11px;font-family:var(--mono);color:var(--muted);flex-wrap:wrap}
+.h-notes ul{list-style:none}
+.h-notes li{font-size:11px;font-family:var(--mono);color:var(--dim);padding:2px 0 2px 12px;position:relative}
+.h-notes li::before{content:'→';position:absolute;left:0;color:var(--warn)}
+.h-gluco-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.h-gluco-title{font-size:10px;font-family:var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:2px}
+.h-gluco-row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:32px}
+.h-gluco-lbl{font-size:12px;font-family:var(--mono);color:var(--muted);flex-shrink:0}
+.h-gluco-val{font-size:14px;font-weight:700;font-family:var(--mono);color:var(--text)}
+.h-gluco-val.accent{color:var(--accent)}
+.h-gluco-unit{font-size:10px;color:var(--dim);font-weight:400}
+.h-gluco-val-row{display:flex;align-items:center;gap:8px}
+.h-gluco-edit{background:none;border:none;color:var(--dim);font-size:13px;padding:2px 4px;cursor:pointer;line-height:1;transition:.15s}
+.h-gluco-edit:hover{color:var(--danger)}
+.h-gluco-add{background:none;border:1px dashed var(--border-b);border-radius:7px;color:var(--muted);font-family:var(--mono);font-size:11px;padding:5px 12px;cursor:pointer;transition:.15s;white-space:nowrap}
+.h-gluco-add:active{border-color:var(--accent);color:var(--accent)}
+.h-gluco-input-row{display:flex;align-items:center;gap:6px;flex:1;justify-content:flex-end}
+.h-gluco-inp{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:14px;font-weight:500;padding:6px 10px;width:90px;text-align:center;outline:none;-moz-appearance:textfield}
+.h-gluco-inp:focus{border-color:var(--accent)}
+.h-gluco-inp::-webkit-outer-spin-button,.h-gluco-inp::-webkit-inner-spin-button{-webkit-appearance:none}
+.h-gluco-save{background:var(--accent);color:var(--bg);border:none;border-radius:7px;font-family:var(--sans);font-weight:700;font-size:12px;padding:6px 11px;cursor:pointer;white-space:nowrap}
+.h-gluco-cancel{background:none;border:none;color:var(--dim);font-size:14px;padding:4px;cursor:pointer}
+.h-rise{font-size:11px;font-family:var(--mono);padding:6px 10px;border-radius:7px;text-align:center}
+.h-rise.good{background:rgba(61,220,110,.1);color:var(--accent);border:1px solid rgba(61,220,110,.2)}
+.h-rise.warn{background:rgba(245,200,66,.1);color:var(--warn);border:1px solid rgba(245,200,66,.2)}
+.h-rise.bad{background:rgba(240,112,112,.1);color:var(--danger);border:1px solid rgba(240,112,112,.2)}
+
+/* STATS */
+/* ── STATS PAGE ── */
+.stats-pg{padding:0}
+.stats-hero{padding:20px 18px 16px;border-bottom:1px solid var(--border)}
+.stats-hero-title{font-size:22px;font-weight:800;margin-bottom:2px}
+.stats-hero-sub{font-size:11px;font-family:var(--mono);color:var(--dim)}
+/* ICR VERDICT CARD */
+.icr-verdict{margin:18px 18px 0;border-radius:var(--r);padding:18px;border:1.5px solid}
+.icr-verdict.match{background:rgba(61,220,110,.07);border-color:var(--accent)}
+.icr-verdict.low{background:rgba(245,200,66,.07);border-color:var(--warn)}
+.icr-verdict.high{background:rgba(240,112,112,.07);border-color:var(--danger)}
+.icr-verdict.nodata{background:var(--surface);border-color:var(--border)}
+.iv-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.iv-icon{font-size:22px;flex-shrink:0}
+.iv-title{font-size:14px;font-weight:700}
+.iv-sub{font-size:11px;font-family:var(--mono);color:var(--muted);margin-top:2px}
+.iv-numbers{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.iv-num{display:flex;flex-direction:column;align-items:center;gap:3px;background:rgba(0,0,0,.2);border-radius:9px;padding:11px 8px}
+.iv-val{font-size:22px;font-weight:800;font-family:var(--sans)}
+.iv-lbl{font-size:9px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.8px;text-align:center}
+.iv-verdict-text{font-size:12px;font-family:var(--mono);color:var(--muted);line-height:1.6;padding-top:12px;border-top:1px solid rgba(255,255,255,.06)}
+.iv-confidence{display:flex;align-items:center;gap:6px;margin-top:8px}
+.iv-conf-bar{flex:1;height:4px;background:rgba(255,255,255,.1);border-radius:100px;overflow:hidden}
+.iv-conf-fill{height:100%;border-radius:100px;background:var(--accent);transition:width .8s ease}
+.iv-conf-lbl{font-size:10px;font-family:var(--mono);color:var(--dim);white-space:nowrap}
+/* STATS SECTIONS */
+.stats-section{padding:18px 18px 0}
+.sec-ttl{font-size:10px;font-family:var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:1.8px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.sec-ttl::after{content:'';flex:1;height:1px;background:var(--border)}
+/* STAT GRID */
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:4px}
+.stat-card.hi{background:var(--accent-d);border-color:var(--accent)}
+.stat-card.wa{background:var(--warn-d);border-color:var(--warn)}
+.stat-card.gd{background:var(--accent-d);border-color:var(--accent)}
+.stat-card.wide{grid-column:1/-1}
+.stat-v{font-size:26px;font-weight:800;line-height:1}
+.stat-card.hi .stat-v{color:var(--accent)}
+.stat-card.wa .stat-v{color:var(--warn)}
+.stat-card.gd .stat-v{color:var(--accent)}
+.stat-l{font-size:10px;font-family:var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.stat-sub{font-size:11px;font-family:var(--mono);color:var(--muted);margin-top:3px}
+/* MINI TREND CHART */
+.trend-chart{width:100%;height:52px;margin-top:6px}
+.trend-svg{width:100%;height:100%;overflow:visible}
+/* GLUCOSE BAND */
+.glu-band{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.glu-band-row{display:flex;align-items:center;gap:10px}
+.glu-band-lbl{font-size:11px;font-family:var(--mono);color:var(--muted);width:58px;flex-shrink:0}
+.glu-band-track{flex:1;height:8px;background:var(--surface2);border-radius:100px;overflow:hidden;position:relative}
+.glu-band-fill{height:100%;border-radius:100px}
+.glu-band-val{font-size:12px;font-weight:700;font-family:var(--mono);width:52px;text-align:right;flex-shrink:0}
+/* GI BARS */
+.gi-row{display:flex;align-items:center;gap:11px}
+.gi-nm{font-family:var(--mono);font-size:11px;width:52px;text-transform:capitalize}
+.gi-nm.low{color:var(--accent)}.gi-nm.medium{color:var(--warn)}.gi-nm.high{color:var(--danger)}
+.gi-track{flex:1;height:6px;background:var(--surface2);border-radius:100px;overflow:hidden}
+.gi-fill{height:100%;border-radius:100px;transition:width .6s ease}
+.gi-fill.low{background:var(--accent)}.gi-fill.medium{background:var(--warn)}.gi-fill.high{background:var(--danger)}
+.gi-ct{font-family:var(--mono);font-size:11px;color:var(--muted);width:18px;text-align:right}
+/* STREAK / SUMMARY ROW */
+.summary-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sum-cell{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 10px;display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center}
+.sum-v{font-size:20px;font-weight:800}
+.sum-l{font-size:9px;font-family:var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
+/* legacy aliases */
+.icr-cmp{display:none}
+.icr-it{display:none}
+.icr-lb{display:none}
+.icr-v{display:none}
+.icr-arr{display:none}
+
+/* SETTINGS */
+.set-sec{display:flex;flex-direction:column;gap:11px;margin-bottom:24px}
+.set-ttl{font-size:11px;font-family:var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:1.5px}
+.icr-inp{display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:11px 15px}
+.icr-pre,.icr-suf{font-family:var(--mono);color:var(--muted);font-size:13px}
+.icr-inp input{flex:1;background:none;border:none;color:var(--accent);font-size:26px;font-weight:800;text-align:center;outline:none;font-family:var(--sans)}
+.integ-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:15px;display:flex;flex-direction:column;gap:11px}
+.integ-hdr{display:flex;align-items:flex-start;gap:11px}
+.integ-ico{font-size:22px;flex-shrink:0}
+.integ-hdr strong{font-size:14px;font-weight:700;display:block}
+.integ-hdr p{font-size:11px;font-family:var(--mono);color:var(--dim);margin-top:2px}
+.integ-st{margin-left:auto;font-size:10px;font-family:var(--mono);border-radius:100px;padding:3px 9px;flex-shrink:0}
+.integ-st.on{background:var(--accent-d);color:var(--accent);border:1px solid var(--accent)}
+.integ-note{font-size:11px;font-family:var(--mono);color:var(--muted);line-height:1.6}
+.integ-note ul{padding-left:14px;margin-top:5px}
+.integ-note li{margin-bottom:3px}
+.lnk{color:var(--accent);text-decoration:none}
+.about-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:15px;display:flex;flex-direction:column;gap:7px;font-size:12px;font-family:var(--mono);color:var(--muted)}
+.disclaim{color:var(--warn);font-size:10px;margin-top:3px;line-height:1.5}
+.btn-ghost-danger{background:none;border:1px dashed var(--danger);color:var(--danger);border-radius:9px;font-family:var(--mono);font-size:12px;padding:9px 16px;cursor:pointer;transition:.15s;width:100%;text-align:center}
+.btn-ghost-danger:hover{background:var(--danger-d)}
+.btn-ghost-danger:disabled{opacity:.35;cursor:not-allowed}
+.btn-danger{background:var(--danger);color:#fff;border:none;border-radius:9px;font-family:var(--sans);font-weight:700;font-size:13px;padding:10px 14px;cursor:pointer;transition:.15s}
+.btn-danger:hover{opacity:.85}
+.clear-confirm{display:flex;flex-direction:column;gap:10px}
+.clear-warn{font-size:12px;font-family:var(--mono);color:var(--danger);background:var(--danger-d);border:1px solid var(--danger);border-radius:8px;padding:10px 12px;line-height:1.5}
+
+/* EMPTY */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:50vh;gap:11px;text-align:center;padding:40px 20px}
+.empty-ico{font-size:46px;opacity:.35}
+.empty h2{font-size:19px;font-weight:700}
+.empty p{font-size:12px;font-family:var(--mono);color:var(--muted)}
+
+/* GAP UTILS */
+.gap-4{display:flex;flex-direction:column;gap:14px}
+.gap-3{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;gap:8px;align-items:center}
+.mt-4{margin-top:14px}
+.mt-2{margin-top:7px}
+.spin{display:inline-block;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes slideup{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+/* ── SPEECH TO TEXT ── */
+.stt-wrap{position:relative}
+.stt-btn{position:absolute;bottom:10px;right:10px;background:var(--accent-d);border:1.5px solid var(--accent);border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s;color:var(--accent);z-index:1;box-shadow:0 2px 8px rgba(61,220,110,0.2)}
+.stt-btn svg{width:19px;height:19px;display:block}
+.stt-btn:active{background:var(--accent);color:var(--bg)}
+.stt-btn.listening{background:var(--danger);border-color:var(--danger);color:#fff;animation:pulse 1s infinite;box-shadow:0 2px 12px rgba(240,112,112,0.4)}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+
+/* ── GLUCOSE STRIP (log page) ── */
+.log-gluco-strip{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;margin-bottom:4px}
+.lgs-left{flex:1;min-width:0}
+.lgs-label{font-size:10px;font-family:var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px}
+.lgs-input-row{display:flex;align-items:center;gap:8px}
+.lgs-inp{background:none;border:none;border-bottom:1.5px solid var(--border-b);color:var(--accent);font-family:var(--mono);font-size:20px;font-weight:500;width:90px;outline:none;padding:2px 0;-moz-appearance:textfield}
+.lgs-inp::-webkit-outer-spin-button,.lgs-inp::-webkit-inner-spin-button{-webkit-appearance:none}
+.lgs-inp:focus{border-bottom-color:var(--accent)}
+.lgs-val{font-size:20px;font-weight:700;font-family:var(--mono)}
+.lgs-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+.lgs-corr{display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+.lgs-corr-val{font-size:14px;font-weight:700;font-family:var(--mono);color:var(--warn)}
+.lgs-corr-lbl{font-size:9px;font-family:var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+.lgs-alert{font-size:10px;font-family:var(--mono);color:var(--danger);background:var(--danger-d);border:1px solid var(--danger);border-radius:6px;padding:3px 8px;text-align:center}
+
+/* ── FAVOURITES STRIP ── */
+.fav-strip{margin-bottom:4px}
+.fav-strip-label{font-size:10px;font-family:var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:7px}
+.fav-scroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.fav-scroll::-webkit-scrollbar{display:none}
+.fav-chip{background:var(--surface);border:1px solid var(--border-b);border-radius:100px;padding:7px 14px;display:flex;align-items:center;gap:8px;white-space:nowrap;cursor:pointer;transition:.15s;flex-shrink:0}
+.fav-chip:active{background:var(--accent-d);border-color:var(--accent)}
+.fav-chip-name{font-size:12px;font-weight:600;color:var(--text)}
+.fav-chip-carbs{font-size:11px;font-family:var(--mono);color:var(--accent)}
+.fav-save-btn{width:100%;background:none;border:1.5px dashed var(--accent);border-radius:var(--r);color:var(--accent);font-family:var(--mono);font-size:12px;padding:11px;cursor:pointer;transition:.15s}
+.fav-save-btn:active{background:var(--accent-d)}
+
+/* ── DOSE BREAKDOWN TABLE ── */
+.dose-breakdown{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.db-row{display:grid;grid-template-columns:auto 52px 1fr;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border)}
+.db-row:last-child{border-bottom:none}
+.db-row-note{grid-template-columns:1fr;padding:8px 14px}
+.db-lbl{font-size:12px;font-family:var(--mono);color:var(--muted)}
+.db-val{font-size:14px;font-weight:700;font-family:var(--mono);color:var(--text);text-align:right}
+.db-note{font-size:10px;font-family:var(--mono);color:var(--dim)}
+.db-total{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:var(--surface2);font-weight:700;font-size:14px;font-family:var(--mono);color:var(--accent)}
+
+/* ── HISTORY GRID VIEW ── */
+.view-toggle{background:var(--surface);border:1px solid var(--border);color:var(--muted);border-radius:8px;font-family:var(--mono);font-size:11px;padding:6px 12px;cursor:pointer;transition:.15s;white-space:nowrap}
+.view-toggle:active{border-color:var(--accent);color:var(--accent)}
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
+.pg-cell{position:relative;aspect-ratio:1;overflow:hidden;border-radius:6px;cursor:pointer;background:var(--surface2)}
+.pg-cell img{width:100%;height:100%;object-fit:cover;display:block;transition:.2s}
+.pg-cell:active img{opacity:.7}
+.pg-overlay{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.75));padding:6px 5px 5px;display:flex;justify-content:space-between;align-items:flex-end}
+.pg-carbs{font-size:11px;font-weight:700;font-family:var(--mono);color:#fff}
+.pg-dose{font-size:10px;font-family:var(--mono);color:rgba(255,255,255,.75)}
+
+/* ── AI NARRATIVE ── */
+.narrative-btn{background:var(--surface);border:1px solid var(--border-b);color:var(--muted);border-radius:8px;font-family:var(--mono);font-size:11px;padding:7px 12px;cursor:pointer;transition:.15s;white-space:nowrap}
+.narrative-btn:active{border-color:var(--accent);color:var(--accent)}
+.narrative-card{margin:14px 18px 0;background:linear-gradient(135deg,rgba(61,220,110,.06),rgba(95,168,245,.06));border:1px solid var(--border-b);border-radius:var(--r);padding:16px;animation:fadein .3s ease}
+.narrative-hdr{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:11px;font-family:var(--mono);color:var(--accent);text-transform:uppercase;letter-spacing:1.5px}
+.narrative-close{margin-left:auto;background:none;border:none;color:var(--dim);font-size:16px;cursor:pointer;padding:0 2px}
+.narrative-body{font-size:13px;color:var(--text);line-height:1.65;white-space:pre-wrap}
+.narrative-ts{font-size:10px;font-family:var(--mono);color:var(--dim);margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+
+
+/* REFINE PANEL */
+.refine-panel{width:100%}
+.refine-trigger{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:none;border:1px dashed var(--border-b);border-radius:var(--r);color:var(--muted);font-family:var(--mono);font-size:12px;padding:12px;transition:.2s;letter-spacing:.3px}
+.refine-trigger:hover{border-color:var(--accent);color:var(--accent)}
+.refine-open{background:var(--surface);border:1.5px solid var(--border-b);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px;animation:fadein .2s ease}
+.refine-header{display:flex;gap:10px;align-items:flex-start}
+.refine-ico{font-size:20px;flex-shrink:0;margin-top:1px}
+.refine-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px}
+.refine-sub{font-size:11px;font-family:var(--mono);color:var(--muted);line-height:1.5}
+
+/* ── LOG GLUCOSE STRIP ── */
+.log-gluco-strip{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:4px}
+.lgs-left{display:flex;flex-direction:column;gap:6px;flex:1}
+.lgs-label{font-size:10px;font-family:var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:1.2px}
+.lgs-input-row{display:flex;align-items:center;gap:8px}
+.lgs-inp{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:18px;font-weight:500;padding:7px 12px;width:100px;text-align:center;-moz-appearance:textfield;outline:none}
+.lgs-inp:focus{border-color:var(--accent)}
+.lgs-inp::-webkit-outer-spin-button,.lgs-inp::-webkit-inner-spin-button{-webkit-appearance:none}
+.lgs-val{font-size:18px;font-weight:700;font-family:var(--mono)}
+.lgs-right{display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0}
+.lgs-corr{display:flex;flex-direction:column;align-items:center;background:var(--warn-d);border:1px solid var(--warn);border-radius:8px;padding:6px 10px}
+.lgs-corr-val{font-size:14px;font-weight:700;color:var(--warn);font-family:var(--mono);line-height:1}
+.lgs-corr-lbl{font-size:9px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-top:2px}
+.lgs-alert{background:var(--danger-d);border:1px solid var(--danger);border-radius:8px;color:var(--danger);font-family:var(--mono);font-size:10px;padding:5px 8px;text-align:center}
+
+/* ── FAVOURITES STRIP ── */
+.fav-strip{margin-bottom:4px}
+.fav-strip-label{font-size:10px;font-family:var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:7px}
+.fav-scroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.fav-scroll::-webkit-scrollbar{display:none}
+.fav-chip{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-start;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:9px 13px;cursor:pointer;transition:.15s;gap:2px}
+.fav-chip:active{border-color:var(--accent);background:var(--accent-d)}
+.fav-chip-name{font-size:12px;font-weight:600;color:var(--text);max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fav-chip-carbs{font-size:10px;font-family:var(--mono);color:var(--accent)}
+
+/* ── DOSE BREAKDOWN ── */
+.dose-breakdown{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:0}
+.db-row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)}
+.db-row:last-of-type{border-bottom:none}
+.db-row-note{grid-template-columns:1fr;border-bottom:none;padding:4px 0 0}
+.db-lbl{font-size:12px;font-family:var(--mono);color:var(--muted);white-space:nowrap}
+.db-val{font-size:14px;font-weight:700;font-family:var(--mono);color:var(--text);text-align:right;white-space:nowrap}
+.db-note{font-size:10px;font-family:var(--mono);color:var(--dim);text-align:right}
+.db-total{display:flex;justify-content:space-between;align-items:center;padding-top:10px;margin-top:4px;border-top:1.5px solid var(--border-b);font-weight:700;font-size:15px}
+.db-total span:last-child{color:var(--accent);font-size:18px}
+
+/* ── SAVE AS FAVOURITE ── */
+.fav-save-btn{width:100%;background:none;border:1px dashed var(--border-b);border-radius:var(--r);color:var(--muted);font-family:var(--mono);font-size:12px;padding:11px;cursor:pointer;transition:.15s;text-align:center}
+.fav-save-btn:active{border-color:var(--accent);color:var(--accent);background:var(--accent-d)}
+
+/* ── HISTORY VIEW TOGGLE ── */
+.view-toggle{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:var(--mono);font-size:11px;padding:6px 12px;cursor:pointer;transition:.15s}
+.view-toggle:active{border-color:var(--accent);color:var(--accent)}
+
+/* ── PHOTO GRID ── */
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;border-radius:var(--r);overflow:hidden}
+.pg-cell{position:relative;aspect-ratio:1;overflow:hidden;cursor:pointer;background:var(--surface2)}
+.pg-cell img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .2s}
+.pg-cell:active img{transform:scale(.96)}
+.pg-overlay{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.75));padding:6px 5px 5px;display:flex;justify-content:space-between;align-items:flex-end}
+.pg-carbs{font-size:11px;font-weight:700;color:#fff;font-family:var(--mono)}
+.pg-dose{font-size:10px;color:rgba(255,255,255,.7);font-family:var(--mono)}
+
+/* ── NARRATIVE / INSIGHTS ── */
+.narrative-btn{display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--border-b);border-radius:10px;color:var(--muted);font-family:var(--mono);font-size:12px;padding:10px 15px;cursor:pointer;transition:.15s;margin-bottom:12px}
+.narrative-btn:hover{border-color:var(--accent);color:var(--accent)}
+.narrative-btn:disabled{opacity:.5;cursor:not-allowed}
+.narrative-card{background:var(--surface);border:1px solid var(--border-b);border-radius:var(--r);padding:16px;margin-bottom:12px;animation:fadein .3s ease}
+.narrative-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.narrative-title{font-size:13px;font-weight:700;color:var(--accent)}
+.narrative-close{background:none;border:none;color:var(--dim);font-size:16px;cursor:pointer;padding:2px}
+.narrative-body{font-size:13px;line-height:1.7;color:var(--muted);font-family:var(--mono)}
+.narrative-ts{font-size:10px;color:var(--dim);font-family:var(--mono);margin-top:10px;border-top:1px solid var(--border);padding-top:8px}
+
+/* ── LEGIBILITY & TAP TARGETS (overrides — keep last) ── */
+/* Raise the smallest mono labels to a readable 11px floor. */
+.tagline,.ni-lb,.or-div,.badge,.dose-hdr,.split-lb,.split-tot,.nut-u,.nut-lb,
+.notes-ttl,.day-lbl,.h-time,.hnut-l,.h-gluco-title,.h-gluco-unit,.iv-lbl,
+.iv-conf-lbl,.sec-ttl,.stat-l,.sum-l,.integ-st,.disclaim,.lgs-label,
+.lgs-corr-lbl,.lgs-alert,.fav-strip-label,.db-note,.pg-dose,.pg-carbs,
+.narrative-ts,.fav-chip-carbs,.h-notes li,.notes-card li{font-size:11px}
+.ni-lb{font-size:11px;letter-spacing:.3px}
+
+/* Comfortable touch targets (~40px) for small icon / edit / clear buttons. */
+.h-gluco-edit,.h-gluco-cancel,.narrative-close{
+  min-width:40px;min-height:40px;display:inline-flex;align-items:center;
+  justify-content:center;padding:0;font-size:16px}
+.h-gluco-save,.h-gluco-add{min-height:40px;display:inline-flex;align-items:center;justify-content:center}
+.h-gluco-add{padding:0 14px}
+.fav-del-btn{min-width:40px;min-height:40px;display:inline-flex;align-items:center;justify-content:center;background:none;border:none;color:var(--dim);cursor:pointer;font-size:16px}
+.fav-del-btn:active{color:var(--danger)}
+
+/* ── COLOUR ── */
+/* Gradient wordmark + primary action for a touch of life. */
+.logo{background:linear-gradient(92deg,#3ddc6e,#6ab4f7);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.btn-main{background:linear-gradient(95deg,#3ddc6e,#34c8a2)}
+/* Macro colour-coding — same hue for a macro everywhere (cells + stats). */
+.nm-cal{border-color:#3a2f5e;background:#150f28}
+.nm-carb{border-color:#1e5236;background:#0f2d1a}
+.nm-pro{border-color:#1d3a5c;background:#0c1e35}
+.nm-fat{border-color:#4a3c12;background:#1f1808}
+.nm-fib{border-color:#0f4a42;background:#06231f}
+.nm-sug{border-color:#4a2240;background:#210f23}
+.nm-cal .nut-val,.nm-cal .stat-v{color:#a78bfa}
+.nm-carb .nut-val,.nm-carb .stat-v{color:#3ddc6e}
+.nm-pro .nut-val,.nm-pro .stat-v{color:#6ab4f7}
+.nm-fat .nut-val,.nm-fat .stat-v{color:#f7cc4a}
+.nm-fib .nut-val,.nm-fib .stat-v{color:#2dd4bf}
+.nm-sug .nut-val,.nm-sug .stat-v{color:#f072b6}
+
+/* ── LAST MEAL (log screen reference) ── */
+.last-meal{margin-top:20px;border-top:1px solid var(--border);padding-top:14px}
+.last-meal-hd{font-size:11px;font-family:var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:9px}
+.last-meal-card{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;cursor:pointer;transition:.15s border-color}
+.last-meal-card:active{border-color:var(--accent)}
+.last-meal-thumb{width:44px;height:44px;border-radius:9px;object-fit:cover;flex-shrink:0}
+.last-meal-info{flex:1;min-width:0}
+.last-meal-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.last-meal-time{font-size:11px;font-family:var(--mono);color:var(--dim);margin-top:2px}
+.last-meal-r{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0}
+.last-meal-carbs{font-size:13px;font-weight:700;font-family:var(--mono);color:var(--accent)}
+.last-meal-dose{font-size:11px;font-family:var(--mono);color:var(--muted)}
+.last-meal-dose.sp{color:var(--split)}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="hdr">
+    <div>
+      <div class="logo">CarbLens</div>
+      <div class="tagline">insulin intelligence</div>
+    </div>
+    <div class="hdr-r">
+      <button class="icr-pill" id="icrPill" onclick="nav('settings')">ICR 1:<span id="icrDisplay">5.5</span></button>
+      <button class="sync-btn" id="syncBtn" onclick="syncToDrive()">
+        <span id="syncIco">☁</span><span id="syncLbl">Sync</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="main" id="main"></main>
+
+  <nav class="nav">
+    <button class="ni on" id="nav-log" onclick="nav('log')"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></span><span class="ni-lb">Log</span></button>
+    <button class="ni" id="nav-history" onclick="nav('history')"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg></span><span class="ni-lb">History</span></button>
+    <button class="ni" id="nav-stats" onclick="nav('stats')"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="11"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="14"/></svg></span><span class="ni-lb">Stats</span></button>
+    <button class="ni" id="nav-settings" onclick="nav('settings')"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="8" x2="13" y2="8"/><line x1="17" y1="8" x2="21" y2="8"/><circle cx="15" cy="8" r="2"/><line x1="3" y1="16" x2="9" y2="16"/><line x1="13" y1="16" x2="21" y2="16"/><circle cx="11" cy="16" r="2"/></svg></span><span class="ni-lb">Settings</span></button>
+  </nav>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────
+// ── GEMINI CONFIG — key stored in localStorage as cl_gemini_key ──
+
+let state = {
+  page: 'log',
+  meals: [],
+  favourites: [], // saved meal templates
+  settings: { icr: 5.5, isf: 40, targetGlucose: 100, maxBolus: 25 }, // ISF = mg/dL drop per 1u; maxBolus = safety cap (u)
+  _confirmClear: false,
+  historyView: 'list', // 'list' | 'grid'
+  narrative: { text: null, loading: false, generatedAt: null },
+  log: {
+    phase: 'input', // input | clarifying | pre-glucose | result
+    description: '',
+    imageB64: null,
+    imageMime: 'image/jpeg',
+    loading: false,
+    error: null,
+    nutrition: null,
+    dose: null,
+    clarification: null,
+    clarAnswers: {},
+    currentGlucose: null,   // entered on input page, used for correction dose
+    preGlucose: null,
+    postGlucose: null,
+    currentMealId: null,
+    postRecorded: false,
+    showPostInput: false,
+    showRefine: false,
+    refining: false,
+    refineContext: '',
+    refineError: null,
+  }
+}
+
+// ── SHARED HELPERS ────────────────────────────────────────────
+// Escape any dynamic/user/AI-supplied string before it goes into innerHTML.
+function escapeHTML(s) {
+  if (s == null) return ''
+  return String(s).replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ))
+}
+// Coerce to a finite number within [min,max]; otherwise return fallback.
+function clampNum(v, min, max, fallback) {
+  const n = typeof v === 'number' ? v : parseFloat(v)
+  if (!isFinite(n)) return fallback
+  return Math.min(max, Math.max(min, n))
+}
+// Lightweight toast — replaces silent failures / some alert()s.
+function notify(msg, kind) {
+  try {
+    let t = document.getElementById('cl-toast')
+    if (!t) { t = document.createElement('div'); t.id = 'cl-toast'; document.body.appendChild(t) }
+    const color = kind === 'err' ? '#f47878' : kind === 'ok' ? '#3ddc6e' : '#6ab4f7'
+    t.style.cssText = `position:fixed;bottom:90px;left:50%;transform:translateX(-50%);max-width:440px;width:calc(100% - 36px);z-index:300;background:#101a14;border:1.5px solid ${color};color:${color};border-radius:12px;padding:12px 16px;font-family:'DM Mono',monospace;font-size:12px;line-height:1.5;box-shadow:0 8px 32px rgba(0,0,0,.6);animation:slideup .3s ease`
+    t.textContent = msg
+    clearTimeout(window._toastTimer)
+    window._toastTimer = setTimeout(() => { if (t) t.remove() }, kind === 'err' ? 6000 : 3500)
+  } catch (e) { console.warn('notify failed', e) }
+}
+
+// ── ICONS ─────────────────────────────────────────────────────
+// Inline stroke icons (Lucide-style). They inherit colour via currentColor
+// and size via CSS, so they look identical on every device — unlike emoji.
+const ICONS = {
+  log:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>',
+  history:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>',
+  stats:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="11"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="14"/></svg>',
+  settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="8" x2="13" y2="8"/><line x1="17" y1="8" x2="21" y2="8"/><circle cx="15" cy="8" r="2"/><line x1="3" y1="16" x2="9" y2="16"/><line x1="13" y1="16" x2="21" y2="16"/><circle cx="11" cy="16" r="2"/></svg>',
+  mic:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10v1a7 7 0 0 0 14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>',
+  stop:     '<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="3" fill="currentColor"/></svg>',
+  camera:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3l2-3h8l2 3h3a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>',
+  gallery:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.6"/><path d="M21 15l-5-5L5 21"/></svg>'
+}
+
+// ── IMAGE STORE (IndexedDB) ───────────────────────────────────
+// Photos are large; keeping them out of localStorage avoids blowing the
+// ~5MB quota. localStorage holds only meal metadata + a hasImage flag.
+const ImageStore = (() => {
+  let dbPromise = null
+  function open() {
+    if (dbPromise) return dbPromise
+    dbPromise = new Promise((resolve, reject) => {
+      let req
+      try { req = indexedDB.open('carblens', 1) }
+      catch (e) { return reject(e) }
+      req.onupgradeneeded = () => { req.result.createObjectStore('images') }
+      req.onsuccess = () => resolve(req.result)
+      req.onerror = () => reject(req.error)
+    })
+    return dbPromise
+  }
+  async function withStore(mode, fn) {
+    const db = await open()
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('images', mode)
+      const req = fn(tx.objectStore('images'))
+      tx.oncomplete = () => resolve(req && req.result)
+      tx.onerror = () => reject(tx.error)
+      tx.onabort = () => reject(tx.error)
+    })
+  }
+  return {
+    set: (k, v) => withStore('readwrite', s => s.put(v, k)),
+    get: (k) => withStore('readonly', s => s.get(k)),
+    del: (k) => withStore('readwrite', s => s.delete(k)),
+    clear: () => withStore('readwrite', s => s.clear())
+  }
+})()
+
+// ── PERSISTENCE ───────────────────────────────────────────────
+function load() {
+  try {
+    const raw = localStorage.getItem('carblens_v2')
+    if (!raw) return
+    const d = JSON.parse(raw)
+    // Mark meals whose image is already persisted (new format) so we don't
+    // re-write it. Legacy data has imageB64 inline → migrated on first save().
+    if (d.meals) state.meals = d.meals.map(m => ({ ...m, _imgSaved: !!m.hasImage }))
+    if (d.settings) state.settings = { ...state.settings, ...d.settings }
+    if (d.favourites) state.favourites = d.favourites
+    if (d.narrative) state.narrative = d.narrative
+  } catch (e) {
+    console.error('CarbLens: failed to load saved data', e)
+    notify('Could not load your saved data — it may be corrupted.', 'err')
+  }
+}
+
+function save() {
+  // 1) Persist images to IndexedDB (only those not yet stored).
+  state.meals.forEach(m => {
+    if (m.imageB64 && !m._imgSaved) {
+      ImageStore.set(m.id, m.imageB64)
+        .then(() => { m._imgSaved = true })
+        .catch(e => { console.error('CarbLens: image save failed', m.id, e); notify('A meal photo could not be saved to local storage.', 'err') })
+    }
+  })
+  // 2) Persist metadata to localStorage WITHOUT the base64 image payloads.
+  try {
+    const meals = state.meals.map(m => {
+      const { imageB64, _imgSaved, _expanded, _editingPre, _editingPost, ...rest } = m
+      return { ...rest, hasImage: !!(imageB64 || m.hasImage) }
+    })
+    localStorage.setItem('carblens_v2', JSON.stringify({
+      meals,
+      settings: state.settings,
+      favourites: state.favourites,
+      narrative: state.narrative
+    }))
+  } catch (e) {
+    console.error('CarbLens: save failed', e)
+    notify('Could not save — device storage may be full.', 'err')
+  }
+}
+
+// Pull image payloads back into memory from IndexedDB, then re-render.
+async function hydrateImages() {
+  let changed = false
+  for (const m of state.meals) {
+    if (m.hasImage && !m.imageB64) {
+      try {
+        const img = await ImageStore.get(m.id)
+        if (img) { m.imageB64 = img; m._imgSaved = true; changed = true }
+      } catch (e) { console.error('CarbLens: image load failed', m.id, e) }
+    }
+  }
+  if (changed) render()
+}
+
+load()
+
+// ── ROUTING ───────────────────────────────────────────────────
+function nav(page) {
+  state.page = page
+  document.querySelectorAll('.ni').forEach(b => b.classList.remove('on'))
+  const nb = document.getElementById('nav-' + page)
+  if (nb) nb.classList.add('on')
+  document.getElementById('icrDisplay').textContent = state.settings.icr
+  render()
+}
+
+// ── ANALYSIS ──────────────────────────────────────────────────
+// Split dose detection is now done entirely by Claude in the prompt.
+// Claude reasons about the meal's actual absorption profile — fat content,
+// protein load, glycaemic index, dish type — rather than keyword matching.
+// This handles nihari, naan, biryani, dim sum, etc. correctly without lists.
+
+// Plausibility ceiling for a single meal's carbohydrate estimate.
+const MAX_CARBS_PER_MEAL = 300
+
+// Correction returned as a PRECISE value; rounding to whole units happens in calcDose.
+function calcCorrectionDose(currentGlucose) {
+  const glu = clampNum(currentGlucose, 0, 1000, 0)
+  if (!glu) return 0
+  const target = clampNum(state.settings.targetGlucose, 40, 400, 100)
+  const isf = clampNum(state.settings.isf, 5, 300, 40)
+  const excess = glu - target
+  if (excess <= 0) return 0
+  return excess / isf
+}
+
+// All deliverable doses are rounded to WHOLE units (pens here deliver 1u steps).
+// A configurable max-bolus cap and carb-plausibility check guard against bad
+// inputs (e.g. an AI carb hallucination) producing a dangerously large dose.
+function calcDose(carbs, icr, isSplit, currentGlucose) {
+  const safeICR = clampNum(icr, 1, 50, 5.5)
+  const rawCarbs = clampNum(carbs, 0, 100000, 0)
+  const safeCarbs = Math.min(rawCarbs, MAX_CARBS_PER_MEAL)
+  const maxBolus = clampNum(state.settings.maxBolus, 1, 100, 25)
+
+  const correctionDose = Math.round(calcCorrectionDose(currentGlucose))
+  let foodDose = Math.round(safeCarbs / safeICR)
+  let total = foodDose + correctionDose
+
+  const warnings = []
+  if (rawCarbs > MAX_CARBS_PER_MEAL) {
+    warnings.push(`Carb estimate (${Math.round(rawCarbs)}g) is unusually high for one meal and was capped at ${MAX_CARBS_PER_MEAL}g. Double-check the meal before dosing.`)
+  }
+
+  let capped = false
+  if (total > maxBolus) {
+    capped = true
+    warnings.push(`Calculated dose exceeds your ${maxBolus}u max-bolus safety limit and has been capped. Verify manually with your care team before injecting.`)
+    total = maxBolus
+    foodDose = Math.max(0, total - correctionDose) // keep breakdown consistent with the capped total
+  }
+
+  // Split only when not capped (a capped dose is an alert situation, shown whole).
+  if (isSplit && foodDose >= 3 && !capped) {
+    const nowFood = Math.round(foodDose * 0.6)
+    const laterFood = Math.max(0, foodDose - nowFood)
+    return {
+      total, foodDose, correctionDose,
+      now: nowFood + correctionDose,
+      later: laterFood, delay: 90, split: true, capped, warnings
+    }
+  }
+  return { total, foodDose, correctionDose, split: false, capped, warnings }
+}
+
+// ── CLIENT-SIDE IMAGE COMPRESSION ────────────────────────────────────────────
+async function compressImage(b64, mime) {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.onload = () => {
+      const MAX = 1024
+      let w = img.width, h = img.height
+      if (w > MAX) { h = Math.round(h * MAX / w); w = MAX }
+      const canvas = document.createElement('canvas')
+      canvas.width = w; canvas.height = h
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h)
+      resolve(canvas.toDataURL('image/jpeg', 0.82).split(',')[1])
+    }
+    img.onerror = () => resolve(b64) // fallback: use original if compression fails
+    img.src = `data:${mime || 'image/jpeg'};base64,` + b64
+  })
+}
+
+// Default model is configurable in Settings so a renamed/retired preview model
+// doesn't silently break the app. The key is sent as a header, never in the URL
+// (URLs leak into history, referrers, and proxy logs).
+const DEFAULT_GEMINI_MODEL = 'gemini-3-flash-preview'
+function geminiModel() {
+  return (localStorage.getItem('cl_gemini_model') || '').trim() || DEFAULT_GEMINI_MODEL
+}
+
+async function callGemini(parts) {
+  const key = localStorage.getItem('cl_gemini_key') || ''
+  if (!key) throw new Error('No Gemini API key set. Go to Settings → paste your key from aistudio.google.com')
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(geminiModel())}:generateContent`
+  const body = { contents: [{ parts }] }
+
+  let r, d
+  try {
+    r = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+      body: JSON.stringify(body)
+    })
+  } catch (e) {
+    throw new Error('Network error contacting Gemini. Check your connection and try again.')
+  }
+  try { d = await r.json() } catch (e) { d = {} }
+
+  if (!r.ok || (d && d.error)) {
+    const msg = (d && d.error && d.error.message) ? d.error.message : ('HTTP ' + r.status)
+    throw new Error('Gemini error: ' + msg)
+  }
+
+  // Defensive: the response may be empty if the prompt was blocked, quota hit, etc.
+  const cand = d && d.candidates && d.candidates[0]
+  const text = cand && cand.content && cand.content.parts && cand.content.parts[0] && cand.content.parts[0].text
+  if (typeof text !== 'string') {
+    const reason = (cand && cand.finishReason) || (d && d.promptFeedback && d.promptFeedback.blockReason)
+    throw new Error(reason
+      ? `Gemini returned no usable result (${reason}). Try rephrasing or using a clearer photo.`
+      : 'Gemini returned an empty response. Please try again.')
+  }
+  return text.trim().replace(/```json|```/g, '').trim()
+}
+
+// Robust JSON parsing — models occasionally wrap or prepend text.
+function parseModelJSON(txt) {
+  try { return JSON.parse(txt) }
+  catch (e) {
+    const m = txt && txt.match(/\{[\s\S]*\}/)
+    if (m) { try { return JSON.parse(m[0]) } catch (e2) { /* fall through to friendly error below */ } }
+    throw new Error('The AI returned a response we could not read. Please try again.')
+  }
+}
+
+// Validate + clamp the model's nutrition JSON before any of it reaches dose math.
+// Never trust raw model output: missing/negative/NaN/string values are coerced
+// into safe ranges so a bad field can't produce a garbage ("NaNu") dose.
+function sanitizeNutrition(p) {
+  p = p || {}
+  return {
+    calories:      clampNum(p.calories, 0, 10000, 0),
+    carbs:         clampNum(p.carbs,    0, 100000, 0),
+    protein:       clampNum(p.protein,  0, 1000, 0),
+    fat:           clampNum(p.fat,      0, 1000, 0),
+    fiber:         clampNum(p.fiber,    0, 500, 0),
+    sugar:         clampNum(p.sugar,    0, 100000, 0),
+    confidence:    ['high', 'medium', 'low'].includes(p.confidence) ? p.confidence : 'low',
+    glycemicIndex: ['low', 'medium', 'high'].includes(p.glycemicIndex) ? p.glycemicIndex : 'medium',
+    mealDescription: typeof p.mealDescription === 'string' && p.mealDescription.trim() ? p.mealDescription.slice(0, 300) : 'Meal',
+    notes:         Array.isArray(p.notes) ? p.notes.filter(n => typeof n === 'string').slice(0, 12) : [],
+    splitDose:     p.splitDose === true,
+    splitReason:   typeof p.splitReason === 'string' ? p.splitReason.slice(0, 500) : ''
+  }
+}
+
+// Normalise clarification questions: deterministic safe ids, validated shape.
+function sanitizeClarification(raw) {
+  const qs = Array.isArray(raw.questions) ? raw.questions : []
+  const questions = qs.slice(0, 6).map((q, i) => ({
+    id: 'q' + i,
+    question: typeof q.question === 'string' ? q.question.slice(0, 200) : 'Can you describe this?',
+    type: q.type === 'choice' ? 'choice' : 'text',
+    options: Array.isArray(q.options) ? q.options.map(o => String(o).slice(0, 60)).slice(0, 8) : undefined
+  }))
+  return { questions, partial: typeof raw.partialDescription === 'string' ? raw.partialDescription.slice(0, 200) : '' }
+}
+
+const NUTRITION_PROMPT = (meal, extra) => `You are a clinical nutrition AI for a Type 1 diabetic on a basal-bolus insulin regimen. Analyze this meal and return ONLY a JSON object — no markdown, no explanation, no preamble.
+
+Meal: "${meal}"${extra ? `\nAdditional context: "${extra}"` : ''}
+
+Return EXACTLY this JSON structure:
+{
+  "calories": number,
+  "carbs": number,
+  "protein": number,
+  "fat": number,
+  "fiber": number,
+  "sugar": number,
+  "confidence": "high" | "medium" | "low",
+  "glycemicIndex": "low" | "medium" | "high",
+  "mealDescription": "concise clean description of what was analysed",
+  "notes": ["array of diabetic-relevant notes"],
+  "splitDose": true | false,
+  "splitReason": "string explaining WHY split dose is needed, or empty string if not"
+}
+
+SPLIT DOSE RULES — set splitDose:true if ANY of these conditions are met:
+1. Fat >= 20g AND carbs >= 20g (combined slows gastric emptying significantly)
+2. Protein >= 30g AND fat >= 15g (dual macronutrient delay effect)
+3. The dish is known to cause delayed glucose absorption by its nature, regardless of exact macros — this includes:
+   - Any slow-cooked meat stew or braise (nihari, haleem, paya, oxtail, beef stew, lamb shank, etc.)
+   - Pizza, pasta, lasagna, risotto, biryani, paella, mac and cheese
+   - South/Southeast Asian curries with significant oil or coconut milk (korma, butter chicken, tikka masala, laksa, rendang)
+   - Bread accompaniments to fatty dishes (naan with curry, roti with nihari, garlic bread with pasta)
+   - High-fat baked goods (croissants, doughnuts, brioche, stuffed parathas)
+   - Deep-fried foods (samosas, pakoras, fish and chips, fried chicken)
+   - Creamy or cheesy dishes (carbonara, alfredo, cheesy casseroles)
+   - High-fat desserts (cheesecake, ice cream, chocolate cake, halwa)
+   - Any meal where total fat > 25g
+4. If in doubt and the meal is clearly rich/heavy, default to splitDose:true
+
+IMPORTANT: DO NOT set splitDose:true for:
+- Simple lean meals (grilled chicken + salad, plain rice + dhal with minimal oil)
+- Low-fat snacks where the impact will peak quickly
+- Meals where the glucose rise will be fast and predictable
+
+splitReason must explain the clinical rationale (e.g. "Nihari is a slow-cooked fatty beef broth with significant tallow content. Combined with naan (high refined carb), gastric emptying is substantially delayed. Glucose peak typically 2.5–4 hours post-meal.")
+
+notes: include GI warnings, hidden carb sources, portion size assumptions, diabetic watch-points.
+confidence: high=well-known dish with known values, medium=estimated, low=very vague description.`
+
+async function analyzeText(description, icr, extraContext, currentGlucose) {
+  const txt = await callGemini([{ text: NUTRITION_PROMPT(description, extraContext) }])
+  const p = sanitizeNutrition(parseModelJSON(txt))
+  return {
+    nutrition: { ...p, isSplit: p.splitDose, splitReason: p.splitReason },
+    dose: calcDose(p.carbs, icr, p.splitDose, currentGlucose)
+  }
+}
+
+async function analyzeImage(b64, mime, icr, clarifications, extraContext, currentGlucose) {
+  const clarNote = clarifications ? `\nUser clarifications: ${JSON.stringify(clarifications)}` : ''
+  const extraNote = extraContext ? `\nAdditional context from user: "${extraContext}"` : ''
+  const prompt = `You are a clinical nutrition AI for a Type 1 diabetic. Analyze this meal photo and return ONLY JSON.${clarNote}${extraNote}
+
+If you can identify the meal with sufficient confidence, return:
+{
+  "status": "success",
+  "calories": number, "carbs": number, "protein": number, "fat": number, "fiber": number, "sugar": number,
+  "confidence": "high"|"medium"|"low",
+  "glycemicIndex": "low"|"medium"|"high",
+  "mealDescription": "what you see",
+  "notes": ["diabetic-relevant notes"],
+  "splitDose": true|false,
+  "splitReason": "clinical rationale for split dose or empty string"
+}
+
+If you CANNOT analyze confidently (image unclear, unidentifiable contents), return:
+{
+  "status": "needs_clarification",
+  "questions": [{"id":"q1","question":"What is in the bowl/cup?","type":"text"}, {"id":"q2","question":"Approximate portion?","type":"choice","options":["Small","Medium","Large"]}],
+  "partialDescription": "what you can identify"
+}
+
+SPLIT DOSE: Set splitDose:true for any meal that is fatty, slow-cooked, creamy, fried, or has combined high fat+carb load. See: pizza, pasta, curries, biryani, naan with curry, slow-cooked meats, fried foods, rich desserts, anything with visible oil/ghee/cream. When in doubt on a rich meal, default to true.`
+
+  const compressed = await compressImage(b64, mime)
+  const txt = await callGemini([
+    { inline_data: { mime_type: 'image/jpeg', data: compressed } },
+    { text: prompt }
+  ])
+  const raw = parseModelJSON(txt)
+  if (raw.status === 'needs_clarification') return { needsClarification: sanitizeClarification(raw) }
+  const p = sanitizeNutrition(raw)
+  return {
+    nutrition: { ...p, isSplit: p.splitDose, splitReason: p.splitReason },
+    dose: calcDose(p.carbs, icr, p.splitDose, currentGlucose)
+  }
+}
+
+async function doRefineAnalysis(extraContext) {
+  const L = state.log
+  L.refining = true; L.refineError = null
+  render()
+  try {
+    let result
+    if (L.imageB64) result = await analyzeImage(L.imageB64, L.imageMime, state.settings.icr, null, extraContext, L.currentGlucose)
+    else result = await analyzeText(L.description, state.settings.icr, extraContext, L.currentGlucose)
+    L.nutrition = result.nutrition
+    L.dose = result.dose
+    L.showRefine = false
+    L.refineContext = ''
+    // Update saved meal if already saved
+    const meal = state.meals.find(m => m.id === L.currentMealId)
+    if (meal) { meal.nutrition = result.nutrition; meal.dose = result.dose; save() }
+  } catch(e) {
+    L.refineError = e.message || 'Refinement failed.'
+  } finally {
+    L.refining = false
+    render()
+  }
+}
+
+// ── ACTIONS ───────────────────────────────────────────────────
+async function doAnalyze(clarifications) {
+  const L = state.log
+  L.loading = true; L.error = null
+  render()
+  try {
+    let result
+    if (L.imageB64) result = await analyzeImage(L.imageB64, L.imageMime, state.settings.icr, clarifications, null, L.currentGlucose)
+    else result = await analyzeText(L.description, state.settings.icr, null, L.currentGlucose)
+
+    if (result.needsClarification) {
+      L.clarification = result.needsClarification
+      L.phase = 'clarifying'
+    } else {
+      L.nutrition = result.nutrition
+      L.dose = result.dose
+      // currentGlucose entered on log page — use directly as preGlucose, skip the extra screen
+      const id = crypto.randomUUID()
+      L.currentMealId = id
+      const meal = {
+        id, timestamp: new Date().toISOString(),
+        description: L.description || result.nutrition.mealDescription || 'Photo meal',
+        imageB64: L.imageB64 || null,
+        imageMime: L.imageMime,
+        nutrition: result.nutrition,
+        dose: result.dose,
+        icr: state.settings.icr,
+        preGlucose: L.currentGlucose ? { value: L.currentGlucose, ts: new Date().toISOString() } : null,
+        postGlucose: null,
+        effectiveICR: null
+      }
+      state.meals.unshift(meal)
+      save()
+      L.phase = 'result'
+    }
+  } catch(e) {
+    L.error = e.message || 'Analysis failed. Check your connection and try again.'
+  } finally {
+    L.loading = false
+    render()
+  }
+}
+
+function doPostGlucose(val) {
+  const L = state.log
+  const meal = state.meals.find(m => m.id === L.currentMealId)
+  if (meal) {
+    meal.postGlucose = { value: val, ts: new Date().toISOString() }
+    if (L.preGlucose && L.nutrition) {
+      const carbsAbsorbed = L.nutrition.carbs
+      const insulinGiven = L.dose.total
+      const glucoseRise = val - L.preGlucose
+      if (glucoseRise > 0 && insulinGiven > 0) {
+        meal.effectiveICR = Math.round((carbsAbsorbed / insulinGiven) * (1 / (1 + glucoseRise / 100)) * 10) / 10
+      }
+    }
+    save()
+  }
+  L.postRecorded = true
+  L.showPostInput = false
+  render()
+}
+
+function resetLog() {
+  state.log = {
+    phase: 'input', description: '', imageB64: null, imageMime: 'image/jpeg',
+    loading: false, error: null, nutrition: null, dose: null,
+    clarification: null, clarAnswers: {}, preGlucose: null, postGlucose: null,
+    currentMealId: null, postRecorded: false, showPostInput: false,
+    showRefine: false, refining: false, refineContext: '', refineError: null, currentGlucose: state.log.currentGlucose
+  }
+  render()
+}
+
+// ── BACKUP / EXPORT ───────────────────────────────────────────
+// Photos are omitted from exports (they can be large and live in IndexedDB);
+// runtime-only flags are stripped too.
+function buildExport() {
+  return {
+    meals: state.meals.map(m => {
+      const { imageB64, _imgSaved, _expanded, _editingPre, _editingPost, ...rest } = m
+      return { ...rest, hasImage: false, imageB64: null }
+    }),
+    settings: state.settings,
+    favourites: state.favourites,
+    exportedAt: new Date().toISOString(),
+    totalMeals: state.meals.length
+  }
+}
+
+function backupFilename() {
+  return `carblens-backup-${new Date().toISOString().slice(0,10)}.json`
+}
+
+// Header sync button + Settings button → download a local JSON backup.
+async function syncToDrive() {
+  const btn = document.getElementById('syncBtn')
+  const ico = document.getElementById('syncIco')
+  const lbl = document.getElementById('syncLbl')
+  if (ico) ico.innerHTML = '<span class="spin">⟳</span>'
+  if (lbl) lbl.textContent = '...'
+  try {
+    const json = JSON.stringify(buildExport(), null, 2)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = backupFilename()
+    a.click()
+    URL.revokeObjectURL(url)
+    if (ico) ico.textContent = '✓'; if (lbl) lbl.textContent = 'Saved'; if (btn) btn.className = 'sync-btn ok'
+  } catch (e) {
+    console.error('CarbLens: backup download failed', e)
+    if (ico) ico.textContent = '!'; if (lbl) lbl.textContent = 'Error'; if (btn) btn.className = 'sync-btn err'
+    notify('Could not create backup file.', 'err')
+  }
+  setTimeout(() => { if (ico) ico.textContent = '☁'; if (lbl) lbl.textContent = 'Sync'; if (btn) btn.className = 'sync-btn' }, 3000)
+}
+
+// Dynamically load an external script once.
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) return resolve()
+    const s = document.createElement('script')
+    s.src = src
+    s.onload = () => resolve()
+    s.onerror = () => reject(new Error('Failed to load ' + src))
+    document.head.appendChild(s)
+  })
+}
+
+// Find (or create) a dedicated "CarbLens Backups" folder and return its id.
+// With the drive.file scope we only ever see folders/files this app created,
+// so this reliably reuses the same folder across uploads. Returns null on
+// failure, in which case the upload falls back to My Drive root.
+const DRIVE_FOLDER = 'CarbLens Backups'
+async function ensureDriveFolder(token) {
+  try {
+    const q = encodeURIComponent(`name='${DRIVE_FOLDER}' and mimeType='application/vnd.google-apps.folder' and trashed=false`)
+    const sr = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id,name)`, {
+      headers: { Authorization: 'Bearer ' + token }
+    })
+    if (sr.ok) {
+      const sd = await sr.json()
+      if (sd.files && sd.files.length) return sd.files[0].id
+    }
+    const cr = await fetch('https://www.googleapis.com/drive/v3/files', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: DRIVE_FOLDER, mimeType: 'application/vnd.google-apps.folder' })
+    })
+    if (cr.ok) { const cd = await cr.json(); return cd.id }
+  } catch (e) { console.error('CarbLens: Drive folder setup failed', e) }
+  return null
+}
+
+// Upload the JSON backup straight to the user's Google Drive.
+// Uses Google Identity Services for OAuth (scope drive.file = only files this
+// app creates). Requires a Google OAuth Client ID configured in Settings, and
+// the app's origin added to that client's Authorised JavaScript origins.
+async function uploadToDrive() {
+  const clientId = (localStorage.getItem('cl_google_client_id') || '').trim()
+  if (!clientId) { notify('Add a Google OAuth Client ID in Settings to enable Drive upload.', 'err'); return }
+  const btn = document.getElementById('driveBtn')
+  const orig = btn ? btn.textContent : ''
+  if (btn) { btn.disabled = true; btn.textContent = '⟳ Connecting…' }
+  try {
+    await loadScript('https://accounts.google.com/gsi/client')
+    if (!window.google || !google.accounts || !google.accounts.oauth2) {
+      throw new Error('Google sign-in failed to load.')
+    }
+    const token = await new Promise((resolve, reject) => {
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'https://www.googleapis.com/auth/drive.file',
+        callback: (resp) => resp && resp.access_token ? resolve(resp.access_token) : reject(new Error(resp && resp.error ? resp.error : 'Authorisation cancelled'))
+      })
+      client.requestAccessToken()
+    })
+    const json = JSON.stringify(buildExport(), null, 2)
+    const folderId = await ensureDriveFolder(token)
+    const boundary = 'carblens' + Date.now()
+    const metadata = { name: backupFilename(), mimeType: 'application/json', parents: folderId ? [folderId] : undefined }
+    const body =
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n` +
+      `--${boundary}\r\nContent-Type: application/json\r\n\r\n${json}\r\n--${boundary}--`
+    const r = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'multipart/related; boundary=' + boundary },
+      body
+    })
+    if (!r.ok) { const t = await r.text().catch(() => ''); throw new Error('Drive upload failed (' + r.status + '). ' + t.slice(0, 120)) }
+    notify(folderId ? 'Backup uploaded to Drive → CarbLens Backups ✓' : 'Backup uploaded to Google Drive ✓', 'ok')
+  } catch (e) {
+    console.error('CarbLens: Drive upload failed', e)
+    notify('Drive upload failed: ' + (e.message || e), 'err')
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = orig }
+  }
+}
+
+function saveGoogleClientId() {
+  const inp = document.getElementById('googleClientIdInput')
+  if (!inp) return
+  const v = inp.value.trim()
+  if (v) localStorage.setItem('cl_google_client_id', v)
+  else localStorage.removeItem('cl_google_client_id')
+  const btn = document.getElementById('saveGoogleIdBtn')
+  if (btn) { btn.textContent = '✓ Saved'; setTimeout(() => { btn.textContent = 'Save'; render() }, 1500) }
+}
+
+// ── RENDER ────────────────────────────────────────────────────
+function render() {
+  const m = document.getElementById('main')
+  if (state.page === 'log') m.innerHTML = renderLog()
+  else if (state.page === 'history') m.innerHTML = renderHistory()
+  else if (state.page === 'stats') m.innerHTML = renderStats()
+  else m.innerHTML = renderSettings()
+  attachEvents()
+}
+
+// ── LOG PAGE ──────────────────────────────────────────────────
+function renderLog() {
+  const L = state.log
+  if (L.phase === 'input') return renderInput()
+  if (L.phase === 'clarifying') return renderClarify()
+  if (L.phase === 'result') return renderResult()
+  return ''
+}
+
+function renderInput() {
+  const L = state.log
+  const hasInput = L.description.trim() || L.imageB64
+  const correction = L.currentGlucose ? Math.round(calcCorrectionDose(L.currentGlucose)) : 0
+  const glucoColor = !L.currentGlucose ? 'var(--muted)'
+    : L.currentGlucose < 70 ? 'var(--danger)'
+    : L.currentGlucose <= 100 ? 'var(--accent)'
+    : L.currentGlucose <= 140 ? 'var(--warn)'
+    : 'var(--danger)'
+
+  return `
+  <div class="pg">
+    <div class="mt-2">
+      <div class="pg-title">What are you eating?</div>
+      <div class="pg-sub">Describe your meal or upload a photo</div>
+    </div>
+
+    <!-- CURRENT GLUCOSE STRIP -->
+    <div class="log-gluco-strip">
+      <div class="lgs-left">
+        <div class="lgs-label">Current glucose</div>
+        <div class="lgs-input-row">
+          <input class="lgs-inp" id="currentGluInput" type="number" min="40" max="600"
+            placeholder="mg/dL" value="${L.currentGlucose||''}"
+            oninput="setCurrentGlucose(this.value)">
+          ${L.currentGlucose ? `<span class="lgs-val" style="color:${glucoColor}">${L.currentGlucose}</span>` : ''}
+        </div>
+      </div>
+      <div class="lgs-right">
+        ${correction > 0 ? `<div class="lgs-corr"><span class="lgs-corr-val">+${correction}u</span><span class="lgs-corr-lbl">correction</span></div>` : ''}
+        ${L.currentGlucose && L.currentGlucose < 70 ? `<div class="lgs-alert">⚠ Low — treat before eating</div>` : ''}
+      </div>
+    </div>
+
+    <!-- FAVOURITES -->
+    ${state.favourites.length > 0 ? `
+    <div class="fav-strip">
+      <div class="fav-strip-label">Favourites</div>
+      <div class="fav-scroll">
+        ${state.favourites.map(f => `
+        <button class="fav-chip" onclick="useFavourite('${f.id}')">
+          <span class="fav-chip-name">${escapeHTML(f.name)}</span>
+          <span class="fav-chip-carbs">${f.nutrition.carbs}g</span>
+        </button>`).join('')}
+      </div>
+    </div>` : ''}
+
+    <div class="gap-4">
+      <div class="stt-wrap">
+        <textarea class="field" id="mealDesc" rows="3" placeholder="e.g. grilled chicken breast with basmati rice and steamed broccoli, medium portion...">${escapeHTML(L.description)}</textarea>
+        <button class="stt-btn ${_sttListening ? 'listening' : ''}" id="sttBtn" onclick="toggleSpeech()" title="Tap to speak your meal" aria-label="Dictate meal">
+          <span id="sttIcon">${_sttListening ? ICONS.stop : ICONS.mic}</span>
+        </button>
+      </div>
+      <div class="or-div"><span>or</span></div>
+      ${L.imageB64
+        ? `<div class="photo-zone has-img">
+            <div class="ph-preview"><img src="data:${L.imageMime};base64,${L.imageB64}" alt="meal"></div>
+            <button class="ph-rm-bar" onclick="clearImage()">✕ Remove photo</button>
+           </div>`
+        : `<div class="photo-btns">
+            <div class="photo-btn-wrap">
+              <div class="ph-btn-inner"><span class="ph-btn-ico">${ICONS.gallery}</span><span>Gallery</span></div>
+              <input type="file" accept="image/*" onchange="handleFile(this)" class="ph-file-inp">
+            </div>
+            <div class="photo-btn-wrap">
+              <div class="ph-btn-inner"><span class="ph-btn-ico">${ICONS.camera}</span><span>Camera</span></div>
+              <input type="file" accept="image/*" capture="environment" onchange="handleFile(this)" class="ph-file-inp">
+            </div>
+           </div>`
+      }
+      ${L.error ? `<div class="err-box">${L.error}</div>` : ''}
+      <button class="btn-main" id="analyzeBtn" ${!hasInput || L.loading ? 'disabled' : ''} onclick="doAnalyze()">
+        ${L.loading ? '<span class="dots">Analysing<span>.</span><span>.</span><span>.</span></span>' : 'Analyse Meal →'}
+      </button>
+    </div>
+
+    ${state.meals.length ? (() => { const lm = state.meals[0]; return `
+    <div class="last-meal">
+      <div class="last-meal-hd">Last meal · for reference</div>
+      <div class="last-meal-card" onclick="openLastMeal('${lm.id}')">
+        ${lm.imageB64 ? `<img class="last-meal-thumb" src="data:${lm.imageMime||'image/jpeg'};base64,${lm.imageB64}" alt="">` : ''}
+        <div class="last-meal-info">
+          <div class="last-meal-name">${escapeHTML(lm.description || lm.nutrition.mealDescription)}</div>
+          <div class="last-meal-time">${new Date(lm.timestamp).toLocaleString('en-GB',{weekday:'short',hour:'2-digit',minute:'2-digit'})}</div>
+        </div>
+        <div class="last-meal-r">
+          <span class="last-meal-carbs">${lm.nutrition.carbs}g</span>
+          <span class="last-meal-dose ${lm.dose.split?'sp':''}">${lm.dose.total}u${lm.dose.split?' ⚡':''}</span>
+        </div>
+      </div>
+    </div>`})() : ''}
+  </div>`
+}
+
+function renderClarify() {
+  const L = state.log
+  const c = L.clarification
+  const allAnswered = c.questions.every(q => L.clarAnswers[q.id])
+  return `
+  <div class="pg">
+    <div class="center-phase" style="align-items:flex-start;text-align:left;padding:20px 0">
+      <span style="font-size:36px">🔍</span>
+      <div class="pg-title">Quick question${c.questions.length > 1 ? 's' : ''}</div>
+      <div class="pg-sub" style="margin-bottom:0">I can see ${escapeHTML(c.partial || 'your meal')} — just need a bit more info.</div>
+    </div>
+    ${L.imageB64 ? `<div class="result-img mt-2" style="max-height:150px"><img src="data:${L.imageMime};base64,${L.imageB64}"></div>` : ''}
+    <div class="gap-4 mt-4">
+      ${c.questions.map(q => `
+      <div class="clarify-q">
+        <label>${escapeHTML(q.question)}</label>
+        ${q.type === 'text'
+          ? `<input class="field" id="clar_${q.id}" value="${escapeHTML(L.clarAnswers[q.id]||'')}" placeholder="Type your answer...">`
+          : `<div class="choices">${(q.options||[]).map((o, oi) => `<button class="ch-btn ${L.clarAnswers[q.id]===o?'on':''}" onclick="setClarChoice('${q.id}',${oi})">${escapeHTML(o)}</button>`).join('')}</div>`
+        }
+      </div>`).join('')}
+      ${L.error ? `<div class="err-box">${L.error}</div>` : ''}
+      <div class="row">
+        <button class="btn-sec" onclick="resetLog()">← Start over</button>
+        <button class="btn-main" style="flex:1" ${!allAnswered || L.loading ? 'disabled' : ''} onclick="submitClarify()">
+          ${L.loading ? 'Analysing...' : 'Continue →'}
+        </button>
+      </div>
+    </div>
+  </div>`
+}
+
+function renderResult() {
+  const L = state.log
+  const n = L.nutrition
+  const d = L.dose
+  const hasImage = L.imageB64
+
+  const confColor = { high: 'var(--accent)', medium: 'var(--warn)', low: 'var(--danger)' }[n.confidence]
+  const giColor = { low: 'var(--accent)', medium: 'var(--warn)', high: 'var(--danger)' }[n.glycemicIndex || 'medium']
+
+  return `
+  <div class="pg gap-4">
+    ${hasImage ? `<div class="result-img"><img src="data:${L.imageMime};base64,${L.imageB64}" alt="Your meal"></div>` : ''}
+    <div>
+      <div class="result-name">${escapeHTML(n.mealDescription)}</div>
+      <div class="badges">
+        <span class="badge" style="border-color:${confColor};color:${confColor}">
+          ${n.confidence === 'high' ? '✓' : '≈'} ${n.confidence} confidence
+        </span>
+        ${n.glycemicIndex ? `<span class="badge" style="border-color:${giColor};color:${giColor}">GI: ${n.glycemicIndex}</span>` : ''}
+      </div>
+    </div>
+
+    <!-- DOSE SAFETY WARNINGS -->
+    ${(d.warnings && d.warnings.length) ? `
+    <div class="dose-warn">
+      <div class="dose-warn-hdr">⚠ Check before dosing</div>
+      <ul>${d.warnings.map(w => `<li>${escapeHTML(w)}</li>`).join('')}</ul>
+    </div>` : ''}
+
+    <!-- DOSE BREAKDOWN CARD -->
+    ${d.split ? `
+    <div class="dose-card spl">
+      <div class="dose-hdr"><span>⚡</span> Split Dose Recommended</div>
+      <div class="split-grid">
+        <div class="split-item"><span class="split-u">${d.now}u</span><span class="split-lb">Now</span></div>
+        <div class="split-plus">+</div>
+        <div class="split-item"><span class="split-u">${d.later}u</span><span class="split-lb">${d.delay} min later</span></div>
+      </div>
+      <div class="split-tot">Total bolus: <b>${d.total}u</b></div>
+      ${n.splitReason ? `<div class="split-why">${escapeHTML(n.splitReason)}</div>` : ''}
+    </div>` : `
+    <div class="dose-card std">
+      <div class="dose-hdr">Total Bolus Dose</div>
+      <div class="dose-row"><span class="dose-big">${d.total}</span><span class="dose-lbl">units</span></div>
+    </div>`}
+
+    <!-- DOSE BREAKDOWN TABLE -->
+    <div class="dose-breakdown">
+      <div class="db-row">
+        <span class="db-lbl">🍽 Food dose</span>
+        <span class="db-val">${d.foodDose}u</span>
+        <span class="db-note">ICR 1:${state.settings.icr} × ${n.carbs}g carbs</span>
+      </div>
+      ${(d.correctionDose||0) > 0 ? `
+      <div class="db-row">
+        <span class="db-lbl">🩸 Correction</span>
+        <span class="db-val" style="color:var(--warn)">${d.correctionDose}u</span>
+        <span class="db-note">Glucose ${L.currentGlucose} → target ${state.settings.targetGlucose}</span>
+      </div>` : ''}
+
+      <div class="db-total">
+        <span>Total bolus</span>
+        <span>${d.total}u</span>
+      </div>
+    </div>
+
+    <div class="nut-grid">
+      ${[['Calories', n.calories, 'kcal', 'nm-cal'],['Carbs', n.carbs, 'g', 'nm-carb'],['Protein', n.protein, 'g', 'nm-pro'],['Fat', n.fat, 'g', 'nm-fat'],['Fiber', n.fiber, 'g', 'nm-fib'],['Sugar', n.sugar, 'g', 'nm-sug']].map(([lb, val, u, cls]) => `
+      <div class="nut-cell ${cls}">
+        <span class="nut-val">${val}<span class="nut-u">${u}</span></span>
+        <span class="nut-lb">${lb}</span>
+      </div>`).join('')}
+    </div>
+
+    ${L.preGlucose ? `
+    <div class="gluco-card">
+      <div class="gr"><span class="gr-lbl">Pre-meal</span><span class="gr-val">${L.preGlucose} mg/dL</span></div>
+      ${L.postRecorded
+        ? `<div class="gr ok"><span class="gr-lbl">Post-meal</span><span class="gr-val">✓ Recorded</span></div>`
+        : L.showPostInput
+          ? `<div class="gap-3">
+              <span class="gr-lbl">Post-meal glucose (mg/dL)</span>
+              <div class="gluco-row"><input class="num-field" id="postGluVal" type="number" min="40" max="600" placeholder="e.g. 145"><button class="btn-sm" onclick="submitPostGlucose()">Save</button></div>
+            </div>`
+          : `<button class="btn-ghost" onclick="showPost()">+ Record post-meal (2h later)</button>`
+      }
+    </div>` : `
+    <div>
+      ${L.postRecorded || L.showPostInput ? '' : `<button class="btn-ghost" onclick="showPost()">🩸 Add glucose readings</button>`}
+      ${L.showPostInput ? `
+      <div class="gluco-card">
+        <span class="gr-lbl">Glucose reading (mg/dL)</span>
+        <div class="gluco-row mt-2"><input class="num-field" id="postGluVal" type="number" min="40" max="600" placeholder="e.g. 145"><button class="btn-sm" onclick="submitPostGlucose()">Save</button><button class="btn-ghost" onclick="hidePost()">Skip</button></div>
+      </div>` : ''}
+    </div>`}
+
+    ${n.notes && n.notes.length ? `
+    <div class="notes-card">
+      <div class="notes-ttl">Clinical notes</div>
+      <ul>${n.notes.map(note => `<li>${escapeHTML(note)}</li>`).join('')}</ul>
+    </div>` : ''}
+
+    <!-- REFINE PANEL -->
+    <div class="refine-panel">
+      ${L.showRefine ? `
+      <div class="refine-open">
+        <div class="refine-header">
+          <span class="refine-ico">✎</span>
+          <div>
+            <div class="refine-title">Refine this analysis</div>
+            <div class="refine-sub">Add any detail that changes the picture — portion size, cooking method, added ingredients, etc.</div>
+          </div>
+        </div>
+        <textarea class="field" id="refineInput" rows="3" placeholder="e.g. large portion, extra ghee was added, naan was buttered, half a portion only, the sauce was very oily...">${L.refineContext||''}</textarea>
+        ${L.refineError ? `<div class="err-box">${L.refineError}</div>` : ''}
+        <div class="row" style="gap:8px">
+          <button class="btn-sec" onclick="closeRefine()">Cancel</button>
+          <button class="btn-main" style="flex:1" id="refineBtn" onclick="submitRefine()" ${L.refining ? 'disabled' : ''}>
+            ${L.refining ? '<span class="dots">Re-analysing<span>.</span><span>.</span><span>.</span></span>' : 'Re-analyse →'}
+          </button>
+        </div>
+      </div>` : `
+      <button class="refine-trigger" onclick="openRefine()">
+        <span>✎</span> Add detail to refine analysis
+      </button>`}
+    </div>
+
+    <!-- SAVE AS FAVOURITE -->
+    ${!state.favourites.find(f => f.name === n.mealDescription) ? `
+    <button class="fav-save-btn" onclick="saveAsFavourite()">
+      ☆ Save as favourite
+    </button>` : `
+    <div style="font-size:11px;font-family:var(--mono);color:var(--accent);text-align:center;padding:6px">✓ Saved as favourite</div>`}
+
+    <button class="btn-sec" style="width:100%;margin-top:2px" onclick="resetLog()">+ Log another meal</button>
+  </div>`
+}
+
+// ── HISTORY ───────────────────────────────────────────────────
+function renderHistory() {
+  if (!state.meals.length) return `<div class="pg"><div class="empty"><span class="empty-ico">◷</span><h2>No meals logged yet</h2><p>Your meal history will appear here</p></div></div>`
+
+  const isGrid = state.historyView === 'grid'
+  const grouped = {}
+  state.meals.forEach(m => {
+    const d = new Date(m.timestamp).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
+    if (!grouped[d]) grouped[d] = []
+    grouped[d].push(m)
+  })
+
+  if (isGrid) {
+    // Photo grid — all meals with images shown in a masonry-style grid
+    const withPhotos = state.meals.filter(m => m.imageB64)
+    return `<div class="pg">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div class="pg-title" style="margin-bottom:0">Food Diary</div>
+        <button class="view-toggle" onclick="state.historyView='list';render()">☰ List</button>
+      </div>
+      ${withPhotos.length === 0
+        ? `<div style="text-align:center;padding:40px 20px;color:var(--muted);font-family:var(--mono);font-size:13px">No photos logged yet.<br>Take a photo when logging a meal to build your food diary.</div>`
+        : `<div class="photo-grid">
+            ${withPhotos.map(m => `
+            <div class="pg-cell" onclick="state.historyView='list';state.meals.forEach(x=>x._expanded=false);toggleHistoryAndSwitch('${m.id}')">
+              <img src="data:${m.imageMime||'image/jpeg'};base64,${m.imageB64}" loading="lazy">
+              <div class="pg-overlay">
+                <span class="pg-carbs">${m.nutrition.carbs}g</span>
+                <span class="pg-dose">${m.dose.total}u${m.dose.split?'⚡':''}</span>
+              </div>
+            </div>`).join('')}
+          </div>`}
+    </div>`
+  }
+
+  return `<div class="pg">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div class="pg-title" style="margin-bottom:0">Meal History</div>
+      <button class="view-toggle" onclick="state.historyView='grid';render()">⊞ Photos</button>
+    </div>
+    ${Object.entries(grouped).map(([date, meals]) => `
+    <div class="day-grp">
+      <div class="day-lbl">${date}</div>
+      ${meals.map(m => renderHistoryCard(m)).join('')}
+    </div>`).join('')}
+  </div>`
+}
+
+function toggleHistoryAndSwitch(id) {
+  const meal = state.meals.find(m => m.id === id)
+  if (meal) { meal._expanded = true; render() }
+}
+
+// Open the referenced meal in History (expanded).
+function openLastMeal(id) {
+  const m = state.meals.find(x => x.id === id)
+  if (m) m._expanded = true
+  nav('history')
+}
+
+function renderHistoryCard(m) {
+  const isExp = m._expanded
+  const n = m.nutrition
+  const d = m.dose
+  const sid = m.id.replace(/-/g,'').substring(0,8) // short safe id for input ids
+
+  // Which glucose inputs to show
+  const showPreInput = isExp && !m.preGlucose && m._editingPre
+  const showPostInput = isExp && !m.postGlucose && m._editingPost
+  const hasAnyGluco = m.preGlucose || m.postGlucose || m.effectiveICR
+
+  return `
+  <div class="hcard ${isExp ? 'exp' : ''}">
+    <div class="hcard-hdr" onclick="toggleHistory('${m.id}')">
+      <div class="hcard-l">
+        ${m.imageB64 ? `<img class="h-thumb" src="data:${m.imageMime||'image/jpeg'};base64,${m.imageB64}" alt="">` : ''}
+        <div class="h-info">
+          <span class="h-name">${escapeHTML(m.description || n.mealDescription)}</span>
+          <span class="h-time">${new Date(m.timestamp).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</span>
+        </div>
+      </div>
+      <div class="hcard-r">
+        <span class="h-carbs">${n.carbs}g</span>
+        <span class="h-dose ${d.split ? 'sp' : ''}">${d.total}u ${d.split ? '⚡' : ''}</span>
+      </div>
+    </div>
+    ${isExp ? `
+    <div class="hcard-body">
+      ${m.imageB64 ? `<div class="h-full-img"><img src="data:${m.imageMime||'image/jpeg'};base64,${m.imageB64}" alt=""></div>` : ''}
+
+      <div class="h-nut-row">
+        ${[['Cal',n.calories,'kcal'],['Carbs',n.carbs,'g'],['Protein',n.protein,'g'],['Fat',n.fat,'g'],['Fiber',n.fiber,'g'],['Sugar',n.sugar,'g']].map(([lb,v,u])=>`
+        <div class="hnut"><span class="hnut-v">${v}<span style="font-size:9px;color:var(--dim)">${u}</span></span><span class="hnut-l">${lb}</span></div>`).join('')}
+      </div>
+
+      ${d.split ? `<div class="h-split-note">⚡ Split: ${d.now}u now + ${d.later}u after ${d.delay}min</div>` : ''}
+
+      <!-- GLUCOSE SECTION -->
+      <div class="h-gluco-card">
+        <div class="h-gluco-title">🩸 Glucose</div>
+
+        <!-- Pre-meal -->
+        <div class="h-gluco-row">
+          <span class="h-gluco-lbl">Pre-meal</span>
+          ${m.preGlucose
+            ? `<div class="h-gluco-val-row">
+                <span class="h-gluco-val">${m.preGlucose.value} <span class="h-gluco-unit">mg/dL</span></span>
+                <button class="h-gluco-edit" onclick="event.stopPropagation();clearHistoryGluco('${m.id}','pre')">✕</button>
+               </div>`
+            : showPreInput
+              ? `<div class="h-gluco-input-row" onclick="event.stopPropagation()">
+                  <input class="h-gluco-inp" id="pre_${sid}" type="number" min="40" max="600" placeholder="mg/dL" autofocus>
+                  <button class="h-gluco-save" onclick="event.stopPropagation();saveHistoryGluco('${m.id}','pre','pre_${sid}')">Save</button>
+                  <button class="h-gluco-cancel" onclick="event.stopPropagation();cancelHistoryGluco('${m.id}','pre')">✕</button>
+                 </div>`
+              : `<button class="h-gluco-add" onclick="event.stopPropagation();editHistoryGluco('${m.id}','pre')">+ Add</button>`
+          }
+        </div>
+
+        <!-- Post-meal -->
+        <div class="h-gluco-row">
+          <span class="h-gluco-lbl">Post-meal</span>
+          ${m.postGlucose
+            ? `<div class="h-gluco-val-row">
+                <span class="h-gluco-val">${m.postGlucose.value} <span class="h-gluco-unit">mg/dL</span></span>
+                <button class="h-gluco-edit" onclick="event.stopPropagation();clearHistoryGluco('${m.id}','post')">✕</button>
+               </div>`
+            : showPostInput
+              ? `<div class="h-gluco-input-row" onclick="event.stopPropagation()">
+                  <input class="h-gluco-inp" id="post_${sid}" type="number" min="40" max="600" placeholder="mg/dL" autofocus>
+                  <button class="h-gluco-save" onclick="event.stopPropagation();saveHistoryGluco('${m.id}','post','post_${sid}')">Save</button>
+                  <button class="h-gluco-cancel" onclick="event.stopPropagation();cancelHistoryGluco('${m.id}','post')">✕</button>
+                 </div>`
+              : `<button class="h-gluco-add" onclick="event.stopPropagation();editHistoryGluco('${m.id}','post')">+ Add</button>`
+          }
+        </div>
+
+        <!-- Effective ICR -->
+        ${m.effectiveICR ? `
+        <div class="h-gluco-row">
+          <span class="h-gluco-lbl">Effective ICR</span>
+          <span class="h-gluco-val accent">1:${m.effectiveICR}</span>
+        </div>` : ''}
+
+        <!-- Rise indicator -->
+        ${(m.preGlucose && m.postGlucose) ? (() => {
+          const rise = m.postGlucose.value - m.preGlucose.value
+          const cls = rise > 60 ? 'bad' : rise > 30 ? 'warn' : 'good'
+          return `<div class="h-rise ${cls}">
+            ${rise > 0 ? '↑' : '↓'} ${Math.abs(rise)} mg/dL rise · ${rise > 60 ? 'Higher than expected' : rise > 30 ? 'Moderate rise' : 'Well controlled'}
+          </div>`
+        })() : ''}
+      </div>
+
+      ${n.notes && n.notes.length ? `<div class="h-notes"><ul>${n.notes.map(nt=>`<li>${escapeHTML(nt)}</li>`).join('')}</ul></div>` : ''}
+    </div>` : ''}
+  </div>`
+}
+
+// ── STATS ─────────────────────────────────────────────────────
+function renderStats() {
+  const meals = state.meals
+  if (!meals.length) return `<div class="pg"><div class="empty"><span class="empty-ico">◈</span><h2>No data yet</h2><p>Log some meals to see your stats</p></div></div>`
+
+  // ── Core helpers ──
+  const avg = arr => arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length * 10) / 10 : 0
+  const r1 = n => Math.round(n * 10) / 10
+
+  // ── Date ranges ──
+  const now = new Date()
+  const d7 = new Date(now); d7.setDate(d7.getDate()-7)
+  const d30 = new Date(now); d30.setDate(d30.getDate()-30)
+  const recent7 = meals.filter(m => new Date(m.timestamp) > d7)
+  const recent30 = meals.filter(m => new Date(m.timestamp) > d30)
+
+  // ── Nutrition averages ──
+  const avgCarbs = avg(meals.map(m => m.nutrition.carbs))
+  const avgCal   = avg(meals.map(m => m.nutrition.calories))
+  const avgDose  = avg(meals.map(m => m.dose.total))
+  const avgProt  = avg(meals.map(m => m.nutrition.protein))
+  const avgFat   = avg(meals.map(m => m.nutrition.fat))
+  const avgFiber = avg(meals.map(m => m.nutrition.fiber))
+  const splits   = meals.filter(m => m.dose.split).length
+  const splitPct = Math.round(splits / meals.length * 100)
+
+  // ── Glucose data ──
+  const withBoth = meals.filter(m => m.preGlucose && m.postGlucose)
+  const avgPre   = avg(withBoth.map(m => m.preGlucose.value))
+  const avgPost  = avg(withBoth.map(m => m.postGlucose.value))
+  const avgRise  = avg(withBoth.map(m => m.postGlucose.value - m.preGlucose.value))
+  const wellCtrl = withBoth.filter(m => (m.postGlucose.value - m.preGlucose.value) <= 30).length
+  const wellPct  = withBoth.length ? Math.round(wellCtrl / withBoth.length * 100) : 0
+
+  // ── DATA-DRIVEN ICR CALCULATION ──
+  // Method 1: from effectiveICR fields (pre+post glucose recorded)
+  const effICRs = meals.filter(m => m.effectiveICR && m.effectiveICR > 0).map(m => m.effectiveICR)
+  const avgEffICR = effICRs.length ? r1(avg(effICRs)) : null
+
+  // Method 2: direct carbs/dose ratio (doesn't require glucose, just meal data)
+  // This is the raw ICR implied by how much insulin was taken per gram of carbs
+  const carbDoseRatios = meals.filter(m => m.dose.total > 0 && m.nutrition.carbs > 0)
+                              .map(m => m.nutrition.carbs / m.dose.total)
+  const impliedICR = carbDoseRatios.length ? r1(avg(carbDoseRatios)) : null
+
+  // Use effectiveICR if available (more accurate), else fall back to implied
+  const dataICR = avgEffICR || impliedICR
+  const dataICRMethod = avgEffICR ? 'glucose-adjusted' : (impliedICR ? 'dose-implied' : null)
+  const dataICRN = avgEffICR ? effICRs.length : carbDoseRatios.length
+  const confidence = dataICRN >= 10 ? 'high' : dataICRN >= 5 ? 'medium' : dataICRN >= 2 ? 'low' : null
+  const confPct = dataICRN >= 10 ? 95 : dataICRN >= 5 ? 65 : dataICRN >= 2 ? 35 : 10
+
+  const setICR = state.settings.icr
+  const icrDiff = dataICR ? r1(dataICR - setICR) : null
+  const icrVerdict = !dataICR ? 'nodata'
+    : Math.abs(icrDiff) <= 0.5 ? 'match'
+    : icrDiff > 0 ? 'low'   // data ICR higher → your current dose may be too high (too much insulin per carb)
+    : 'high'                 // data ICR lower  → current dose may be too little
+
+  const verdictIcon = { match:'✓', low:'↑', high:'↓', nodata:'?' }[icrVerdict]
+  const verdictTitle = {
+    match: 'Your ICR looks well calibrated',
+    low:   'Data suggests your ICR may be too aggressive',
+    high:  'Data suggests your ICR may be too conservative',
+    nodata:'Not enough data yet'
+  }[icrVerdict]
+  const verdictSub = {
+    match: `1:${dataICR} measured vs 1:${setICR} set — within tolerance`,
+    low:   `Measured 1:${dataICR} vs set 1:${setICR} — you may need fewer units per meal`,
+    high:  `Measured 1:${dataICR} vs set 1:${setICR} — you may need more units per meal`,
+    nodata: 'Log more meals with glucose readings to get a personalised ICR recommendation'
+  }[icrVerdict]
+  const verdictDetail = {
+    match: `Based on ${dataICRN} meal${dataICRN!==1?'s':''} (${dataICRMethod}), your insulin dosing aligns with your set ratio. Continue monitoring.`,
+    low:   `Your data-derived ratio is ${Math.abs(icrDiff).toFixed(1)} higher than your setting. If this persists across ${dataICRN} meals, consider adjusting upward. Always confirm with your diabetes care team before changing your ratio.`,
+    high:  `Your data-derived ratio is ${Math.abs(icrDiff).toFixed(1)} lower than your setting. Post-meal glucose may be running higher than expected. Discuss with your care team.`,
+    nodata: 'Add pre- and post-meal glucose readings to your history cards to unlock personalised ICR analysis.'
+  }[icrVerdict]
+
+  // ── Mini sparkline data (last 14 meals, carbs) ──
+  const spark = meals.slice(0, 14).reverse()
+  const sparkMax = Math.max(...spark.map(m => m.nutrition.carbs), 1)
+  const sparkW = 100 / Math.max(spark.length, 1)
+  const sparkPoints = spark.map((m, i) => {
+    const x = i * sparkW + sparkW/2
+    const y = 44 - (m.nutrition.carbs / sparkMax) * 38
+    return `${x},${y}`
+  }).join(' ')
+
+  // ── Dose trend sparkline ──
+  const doseMax = Math.max(...spark.map(m => m.dose.total), 1)
+  const dosePoints = spark.map((m, i) => {
+    const x = i * sparkW + sparkW/2
+    const y = 44 - (m.dose.total / doseMax) * 38
+    return `${x},${y}`
+  }).join(' ')
+
+  // ── GI distribution ──
+  const giD = {
+    low:    meals.filter(m => m.nutrition.glycemicIndex === 'low').length,
+    medium: meals.filter(m => m.nutrition.glycemicIndex === 'medium').length,
+    high:   meals.filter(m => m.nutrition.glycemicIndex === 'high').length,
+  }
+  const maxGI = Math.max(giD.low, giD.medium, giD.high, 1)
+
+  // ── Highest carb meal ──
+  const highCarbMeal = meals.reduce((a,b) => b.nutrition.carbs > a.nutrition.carbs ? b : a, meals[0])
+  const highDoseMeal = meals.reduce((a,b) => b.dose.total > a.dose.total ? b : a, meals[0])
+
+  return `<div class="stats-pg">
+
+    <!-- HEADER -->
+    <div class="stats-hero">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div class="stats-hero-title">Stats</div>
+          <div class="stats-hero-sub">${meals.length} meals logged · ${recent7.length} this week · ${recent30.length} this month</div>
+        </div>
+        <button class="narrative-btn" onclick="generateNarrative()" ${state.narrative.loading ? 'disabled' : ''}>
+          ${state.narrative.loading ? '<span class="spin">⟳</span>' : '✦ Insights'}
+        </button>
+      </div>
+    </div>
+
+    <!-- AI NARRATIVE -->
+    ${state.narrative.text ? `
+    <div class="narrative-card">
+      <div class="narrative-hdr">
+        <span>✦</span>
+        <span>AI Pattern Analysis</span>
+        <button class="narrative-close" onclick="state.narrative.text=null;save();render()">✕</button>
+      </div>
+      <div class="narrative-body">${escapeHTML(state.narrative.text)}</div>
+      <div class="narrative-ts">Generated ${new Date(state.narrative.generatedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+    </div>` : ''}
+
+    <!-- ICR VERDICT — top of page, most important -->
+    <div class="icr-verdict ${icrVerdict}">
+      <div class="iv-header">
+        <span class="iv-icon">${verdictIcon}</span>
+        <div>
+          <div class="iv-title">${verdictTitle}</div>
+          <div class="iv-sub">${verdictSub}</div>
+        </div>
+      </div>
+      <div class="iv-numbers">
+        <div class="iv-num">
+          <span class="iv-val" style="color:var(--accent)">1:${setICR}</span>
+          <span class="iv-lbl">Set ICR</span>
+        </div>
+        <div class="iv-num">
+          <span class="iv-val" style="color:${icrVerdict==='match'?'var(--accent)':icrVerdict==='nodata'?'var(--dim)':'var(--warn)'}">${dataICR ? '1:'+dataICR : '—'}</span>
+          <span class="iv-lbl">Data ICR</span>
+        </div>
+        <div class="iv-num">
+          <span class="iv-val" style="color:${icrDiff===null?'var(--dim)':Math.abs(icrDiff)<=0.5?'var(--accent)':'var(--warn)'}">${icrDiff !== null ? (icrDiff > 0 ? '+' : '') + icrDiff : '—'}</span>
+          <span class="iv-lbl">Difference</span>
+        </div>
+      </div>
+      ${confidence ? `
+      <div class="iv-confidence">
+        <span class="iv-conf-lbl">Confidence</span>
+        <div class="iv-conf-bar"><div class="iv-conf-fill" style="width:${confPct}%"></div></div>
+        <span class="iv-conf-lbl">${confidence} (${dataICRN} meals)</span>
+      </div>` : ''}
+      <div class="iv-verdict-text">${verdictDetail}</div>
+    </div>
+
+    <!-- SUMMARY ROW -->
+    <div class="stats-section" style="margin-top:18px">
+      <div class="sec-ttl">Overview</div>
+      <div class="summary-row">
+        <div class="sum-cell"><span class="sum-v" style="color:var(--accent)">${meals.length}</span><span class="sum-l">Total meals</span></div>
+        <div class="sum-cell"><span class="sum-v" style="color:var(--split)">${splits}</span><span class="sum-l">Split doses</span></div>
+        <div class="sum-cell"><span class="sum-v" style="color:${wellPct>=70?'var(--accent)':wellPct>=50?'var(--warn)':'var(--danger)'}">${withBoth.length ? wellPct+'%' : '—'}</span><span class="sum-l">Well controlled</span></div>
+      </div>
+    </div>
+
+    <!-- NUTRITION AVERAGES -->
+    <div class="stats-section" style="margin-top:18px">
+      <div class="sec-ttl">Nutrition averages</div>
+      <div class="stat-grid">
+        <div class="stat-card nm-carb">
+          <span class="stat-v">${avgCarbs}g</span>
+          <span class="stat-l">Avg carbs / meal</span>
+          <span class="stat-sub">Implies ~${r1(avgCarbs/setICR)}u insulin</span>
+        </div>
+        <div class="stat-card hi">
+          <span class="stat-v">${avgDose}u</span>
+          <span class="stat-l">Avg insulin dose</span>
+          <span class="stat-sub">Actual bolus given</span>
+        </div>
+        <div class="stat-card nm-cal">
+          <span class="stat-v">${avgCal}</span>
+          <span class="stat-l">Avg calories</span>
+        </div>
+        <div class="stat-card nm-pro">
+          <span class="stat-v">${avgProt}g</span>
+          <span class="stat-l">Avg protein</span>
+        </div>
+        <div class="stat-card nm-fat">
+          <span class="stat-v">${avgFat}g</span>
+          <span class="stat-l">Avg fat</span>
+        </div>
+        <div class="stat-card nm-fib">
+          <span class="stat-v">${avgFiber}g</span>
+          <span class="stat-l">Avg fiber</span>
+        </div>
+        <div class="stat-card wide">
+          <span class="stat-l" style="margin-bottom:4px">Carb trend — last ${spark.length} meals</span>
+          <div class="trend-chart">
+            <svg class="trend-svg" viewBox="0 0 100 48" preserveAspectRatio="none">
+              <polyline points="${sparkPoints}" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+              ${spark.map((m,i) => `<circle cx="${i * sparkW + sparkW/2}" cy="${44-(m.nutrition.carbs/sparkMax)*38}" r="2" fill="var(--accent)" vector-effect="non-scaling-stroke"/>`).join('')}
+            </svg>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;font-family:var(--mono);color:var(--dim);margin-top:2px">
+            <span>oldest</span><span>most recent</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GLUCOSE SECTION -->
+    ${withBoth.length > 0 ? `
+    <div class="stats-section" style="margin-top:18px">
+      <div class="sec-ttl">Glucose response (${withBoth.length} meals)</div>
+      <div class="glu-band" style="margin-bottom:10px">
+        <div class="glu-band-row">
+          <span class="glu-band-lbl">Pre-meal</span>
+          <div class="glu-band-track">
+            <div class="glu-band-fill" style="width:${Math.min(avgPre/300*100,100)}%;background:${avgPre<100?'var(--accent)':avgPre<140?'var(--warn)':'var(--danger)'}"></div>
+          </div>
+          <span class="glu-band-val" style="color:${avgPre<100?'var(--accent)':avgPre<140?'var(--warn)':'var(--danger)'}">${avgPre}</span>
+        </div>
+        <div class="glu-band-row">
+          <span class="glu-band-lbl">Post-meal</span>
+          <div class="glu-band-track">
+            <div class="glu-band-fill" style="width:${Math.min(avgPost/300*100,100)}%;background:${avgPost<140?'var(--accent)':avgPost<180?'var(--warn)':'var(--danger)'}"></div>
+          </div>
+          <span class="glu-band-val" style="color:${avgPost<140?'var(--accent)':avgPost<180?'var(--warn)':'var(--danger)'}">${avgPost}</span>
+        </div>
+        <div class="glu-band-row">
+          <span class="glu-band-lbl">Rise</span>
+          <div class="glu-band-track">
+            <div class="glu-band-fill" style="width:${Math.min(Math.max(avgRise,0)/100*100,100)}%;background:${avgRise<=30?'var(--accent)':avgRise<=60?'var(--warn)':'var(--danger)'}"></div>
+          </div>
+          <span class="glu-band-val" style="color:${avgRise<=30?'var(--accent)':avgRise<=60?'var(--warn)':'var(--danger)'}">+${Math.max(0,avgRise)}</span>
+        </div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card ${wellPct>=70?'gd':wellPct>=50?'':'wa'}">
+          <span class="stat-v">${wellPct}%</span>
+          <span class="stat-l">Well controlled</span>
+          <span class="stat-sub">Rise ≤30 mg/dL</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-v">${withBoth.filter(m=>(m.postGlucose.value-m.preGlucose.value)>60).length}</span>
+          <span class="stat-l">High spikes</span>
+          <span class="stat-sub">Rise >60 mg/dL</span>
+        </div>
+      </div>
+    </div>` : `
+    <div class="stats-section" style="margin-top:18px">
+      <div class="sec-ttl">Glucose response</div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:24px;margin-bottom:6px">🩸</div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:4px">No glucose data yet</div>
+        <div style="font-size:11px;font-family:var(--mono);color:var(--muted);line-height:1.5">Add pre and post-meal glucose readings in your history cards to unlock glucose response tracking and improve your ICR accuracy.</div>
+      </div>
+    </div>`}
+
+    <!-- SPLIT DOSE & GI -->
+    <div class="stats-section" style="margin-top:18px">
+      <div class="sec-ttl">Meal characteristics</div>
+      <div class="stat-grid" style="margin-bottom:12px">
+        <div class="stat-card ${splitPct>40?'wa':''}">
+          <span class="stat-v">${splitPct}%</span>
+          <span class="stat-l">Split dose meals</span>
+          <span class="stat-sub">${splits} of ${meals.length} meals</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-v">${highCarbMeal.nutrition.carbs}g</span>
+          <span class="stat-l">Highest carb meal</span>
+          <span class="stat-sub">${escapeHTML((highCarbMeal.description||highCarbMeal.nutrition.mealDescription||'').substring(0,22))}…</span>
+        </div>
+      </div>
+      <div class="gap-3">
+        <div class="sec-ttl" style="margin-bottom:8px">Glycaemic index spread</div>
+        ${['low','medium','high'].map(level => `
+        <div class="gi-row">
+          <span class="gi-nm ${level}">${level.charAt(0).toUpperCase()+level.slice(1)}</span>
+          <div class="gi-track"><div class="gi-fill ${level}" style="width:${(giD[level]/maxGI)*100}%"></div></div>
+          <span class="gi-ct">${giD[level]}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+
+    <div style="height:24px"></div>
+  </div>`
+}
+
+// ── SETTINGS ──────────────────────────────────────────────────
+function renderSettings() {
+  return `<div class="pg">
+    <div class="pg-title">Settings</div>
+
+    <div class="set-sec">
+      <div class="set-ttl">Insulin:Carb Ratio (ICR)</div>
+      <p style="font-size:12px;font-family:var(--mono);color:var(--muted)">1 unit of insulin per X grams of carbohydrate.</p>
+      <div class="icr-inp">
+        <span class="icr-pre">1 :</span>
+        <input type="number" id="icrInput" value="${state.settings.icr}" min="1" max="30" step="0.5">
+        <span class="icr-suf">g carbs</span>
+      </div>
+      <button class="btn-sm" id="saveIcrBtn" style="align-self:flex-start" onclick="saveICR()">Save ICR</button>
+    </div>
+
+    <div class="set-sec">
+      <div class="set-ttl">Correction Dose Settings</div>
+      <p style="font-size:12px;font-family:var(--mono);color:var(--muted)">Used to calculate correction dose when your glucose is above target.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <div style="font-size:11px;font-family:var(--mono);color:var(--dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">ISF (mg/dL per unit)</div>
+          <input class="field" id="isfInput" type="number" min="10" max="200" step="5" value="${state.settings.isf||40}" placeholder="40">
+        </div>
+        <div>
+          <div style="font-size:11px;font-family:var(--mono);color:var(--dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Target glucose</div>
+          <input class="field" id="targetGluInput" type="number" min="60" max="200" step="5" value="${state.settings.targetGlucose||100}" placeholder="100">
+        </div>
+      </div>
+      <button class="btn-sm" id="saveCorrBtn" style="align-self:flex-start" onclick="saveCorrectionSettings()">Save</button>
+      <div style="font-size:11px;font-family:var(--mono);color:var(--dim);line-height:1.5">ISF = how many mg/dL 1 unit of insulin drops your glucose. Typical range: 30–60. Confirm with your care team.</div>
+    </div>
+
+    <div class="set-sec">
+      <div class="set-ttl">Safety Limit</div>
+      <p style="font-size:12px;font-family:var(--mono);color:var(--muted)">Maximum single bolus. Any calculated dose above this is capped and flagged so a bad estimate can't trigger a dangerously large dose.</p>
+      <div style="display:grid;grid-template-columns:1fr;gap:10px">
+        <div>
+          <div style="font-size:11px;font-family:var(--mono);color:var(--dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Max bolus (units)</div>
+          <input class="field" id="maxBolusInput" type="number" min="1" max="100" step="1" value="${state.settings.maxBolus||25}" placeholder="25">
+        </div>
+      </div>
+      <button class="btn-sm" id="saveMaxBolusBtn" style="align-self:flex-start" onclick="saveMaxBolus()">Save</button>
+      <div style="font-size:11px;font-family:var(--mono);color:var(--dim);line-height:1.5">Set this to a value you'd never reasonably exceed for one meal. Confirm with your care team.</div>
+    </div>
+
+    ${state.favourites.length > 0 ? `
+    <div class="set-sec">
+      <div class="set-ttl">Favourites (${state.favourites.length})</div>
+      ${state.favourites.map(f => `
+      <div style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 13px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHTML(f.name)}</div>
+          <div style="font-size:11px;font-family:var(--mono);color:var(--muted)">${f.nutrition.carbs}g carbs · ${f.nutrition.calories} kcal</div>
+        </div>
+        <button class="fav-del-btn" onclick="deleteFavourite('${f.id}')" aria-label="Delete favourite">🗑</button>
+      </div>`).join('')}
+    </div>` : ''}
+
+    <div class="set-sec">
+      <div class="set-ttl">Gemini API Key</div>
+      <p style="font-size:12px;font-family:var(--mono);color:var(--muted)">Free key from <a class="lnk" href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a> — required for AI analysis.</p>
+      <input class="field" id="geminiKeyInput" type="password" placeholder="AIza..." value="${escapeHTML(localStorage.getItem('cl_gemini_key')||'')}">
+      <button class="btn-sm" id="saveGeminiBtn" style="align-self:flex-start" onclick="saveGeminiKey()">Save Key</button>
+      ${localStorage.getItem('cl_gemini_key')
+        ? `<div style="font-size:11px;font-family:var(--mono);color:var(--accent)">✓ API key configured</div>`
+        : `<div style="font-size:11px;font-family:var(--mono);color:var(--warn)">⚠ No key set — AI analysis won't work</div>`
+      }
+      <div style="font-size:11px;font-family:var(--mono);color:var(--dim);margin-top:8px;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Model</div>
+      <input class="field" id="geminiModelInput" placeholder="${DEFAULT_GEMINI_MODEL}" value="${escapeHTML(localStorage.getItem('cl_gemini_model')||'')}">
+      <button class="btn-sm" id="saveModelBtn" style="align-self:flex-start" onclick="saveGeminiModel()">Save Model</button>
+      <div style="font-size:11px;font-family:var(--mono);color:var(--dim);line-height:1.5">Leave blank to use the default (<b>${DEFAULT_GEMINI_MODEL}</b>). Change this if Google renames or retires the model.</div>
+    </div>
+
+    <div class="set-sec">
+      <div class="set-ttl">Glucose readings</div>
+      <div class="integ-card">
+        <div class="integ-note">
+          CarbLens uses glucose readings you enter manually. Continuous glucose monitors (e.g. Abbott Libre) don't offer a public API for third-party web apps, so there's no automatic import:
+          <ul>
+            <li>Check your current reading in your CGM app or meter</li>
+            <li>Type it into the "Current glucose" field when logging a meal</li>
+            <li>Add post-meal readings later from any meal's history card</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="set-sec">
+      <div class="set-ttl">Backup &amp; Export</div>
+      <div class="integ-card">
+        <div class="integ-note small">Download your data as JSON, upload it to your Google Drive, or export a PDF report for your diabetes consultant. (Photos are not included in exports.)</div>
+        <div class="row" style="gap:8px;flex-wrap:wrap">
+          <button class="btn-ghost" onclick="syncToDrive()" style="flex:1">↓ JSON backup</button>
+          <button class="btn-ghost" onclick="exportPDF()" style="flex:1">↓ PDF report</button>
+        </div>
+        <button class="btn-ghost" id="driveBtn" onclick="uploadToDrive()" style="width:100%">☁ Upload backup to Google Drive</button>
+        <div style="margin-top:4px">
+          <div style="font-size:11px;font-family:var(--mono);color:var(--dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Google OAuth Client ID</div>
+          <input class="field" id="googleClientIdInput" placeholder="xxxxx.apps.googleusercontent.com" value="${escapeHTML(localStorage.getItem('cl_google_client_id')||'')}">
+          <button class="btn-sm" id="saveGoogleIdBtn" style="align-self:flex-start;margin-top:8px" onclick="saveGoogleClientId()">Save</button>
+          <div style="font-size:11px;font-family:var(--mono);color:var(--dim);line-height:1.5;margin-top:6px">Create one in Google Cloud Console (OAuth client, type "Web"), enable the Drive API, and add this app's URL to the client's <b>Authorised JavaScript origins</b>. Drive access is limited to files this app creates.</div>
+        </div>
+        <div style="margin-top:8px">
+          <div style="font-size:11px;font-family:var(--mono);color:var(--dim);margin-bottom:6px">Restore from backup</div>
+          <div class="photo-btn-wrap" style="border-style:dashed;border-color:var(--border-b)">
+            <div class="ph-btn-inner" style="padding:10px 16px;font-size:12px;gap:6px"><span>📂</span><span>Choose JSON backup file</span></div>
+            <input type="file" accept=".json,application/json" onchange="restoreBackup(this)" class="ph-file-inp">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="set-sec">
+      <div class="set-ttl">Data</div>
+      <div class="integ-card">
+        <div class="integ-hdr">
+          <span class="integ-ico">🗑</span>
+          <div>
+            <strong>Clear History</strong>
+            <p>${state.meals.length} meal${state.meals.length !== 1 ? 's' : ''} stored on this device</p>
+          </div>
+        </div>
+        ${state._confirmClear ? `
+        <div class="clear-confirm">
+          <div class="clear-warn">This will permanently delete all ${state.meals.length} meals and cannot be undone.</div>
+          <div class="row" style="gap:8px">
+            <button class="btn-sec" style="flex:1" onclick="cancelClear()">Cancel</button>
+            <button class="btn-danger" style="flex:1" onclick="confirmClear()">Yes, delete all</button>
+          </div>
+        </div>` : `
+        <button class="btn-ghost-danger" onclick="promptClear()" ${state.meals.length === 0 ? 'disabled' : ''}>
+          Clear all meal history
+        </button>`}
+      </div>
+    </div>
+
+    <div class="set-sec">
+      <div class="set-ttl">About</div>
+      <div class="about-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <span><b>CarbLens</b> — Insulin Intelligence</span>
+          <span style="font-size:10px;background:var(--accent-d);color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:2px 8px;white-space:nowrap;margin-left:8px">v2026-04-06 08:24 UTC</span>
+        </div>
+        <span>AI-powered meal analysis with ICR-based insulin dosing. Designed for Type 1 diabetes management.</span>
+        <div style="display:flex;align-items:center;gap:6px;padding-top:4px;border-top:1px solid var(--border);margin-top:4px">
+          <span style="font-size:11px;color:var(--muted)">Created by <b style="color:var(--text)">Faisal Bhatti</b> with <b style="color:var(--accent)">Claude</b></span>
+        </div>
+        <span class="disclaim">⚠️ Always verify doses with your healthcare provider. This app does not replace medical advice. Insulin dosing errors can be dangerous.</span>
+      </div>
+    </div>
+  </div>`
+}
+
+// ── EVENTS ────────────────────────────────────────────────────
+function attachEvents() {
+  const desc = document.getElementById('mealDesc')
+  if (desc) desc.addEventListener('input', e => { state.log.description = e.target.value; updateAnalyzeBtn() })
+  const refineInp = document.getElementById('refineInput')
+  if (refineInp) refineInp.addEventListener('input', e => { state.log.refineContext = e.target.value })
+
+  const clarFields = document.querySelectorAll('[id^="clar_"]')
+  clarFields.forEach(f => {
+    f.addEventListener('input', e => {
+      const id = e.target.id.replace('clar_', '')
+      state.log.clarAnswers[id] = e.target.value
+      render()
+    })
+  })
+}
+
+function updateAnalyzeBtn() {
+  const btn = document.getElementById('analyzeBtn')
+  if (btn) btn.disabled = (!state.log.description.trim() && !state.log.imageB64) || state.log.loading
+}
+
+function handleFile(input) {
+  const file = input.files[0]
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = async e => {
+    const raw = e.target.result.split(',')[1]
+    const mime = file.type || 'image/jpeg'
+    // Compress immediately on load — keeps stored image small too
+    state.log.imageB64 = await compressImage(raw, mime)
+    state.log.imageMime = 'image/jpeg'
+    render()
+  }
+  reader.readAsDataURL(file)
+}
+
+function handleDrop(e) {
+  e.preventDefault()
+  const file = e.dataTransfer.files[0]
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = async ev => {
+    const raw = ev.target.result.split(',')[1]
+    const mime = file.type || 'image/jpeg'
+    state.log.imageB64 = await compressImage(raw, mime)
+    state.log.imageMime = 'image/jpeg'
+    render()
+  }
+  reader.readAsDataURL(file)
+}
+
+function clearImage() {
+  state.log.imageB64 = null
+  render()
+}
+
+function setClarAnswer(id, val) {
+  state.log.clarAnswers[id] = val
+  render()
+}
+
+// Choice answers are referenced by index to avoid injecting AI text into inline handlers.
+function setClarChoice(id, idx) {
+  const q = state.log.clarification && state.log.clarification.questions.find(x => x.id === id)
+  if (!q || !q.options) return
+  state.log.clarAnswers[id] = q.options[idx]
+  render()
+}
+
+function submitClarify() {
+  const L = state.log
+  const allAnswered = L.clarification.questions.every(q => L.clarAnswers[q.id])
+  if (!allAnswered) return
+  doAnalyze(L.clarAnswers)
+}
+
+function submitPostGlucose() {
+  const val = parseFloat(document.getElementById('postGluVal')?.value)
+  if (!isNaN(val) && val > 0) doPostGlucose(val)
+}
+
+function showPost() { state.log.showPostInput = true; render() }
+function hidePost() { state.log.showPostInput = false; render() }
+
+function toggleHistory(id) {
+  const meal = state.meals.find(m => m.id === id)
+  if (meal) { meal._expanded = !meal._expanded; render() }
+}
+
+function editHistoryGluco(id, type) {
+  const meal = state.meals.find(m => m.id === id)
+  if (!meal) return
+  if (type === 'pre') meal._editingPre = true
+  else meal._editingPost = true
+  render()
+}
+
+function cancelHistoryGluco(id, type) {
+  const meal = state.meals.find(m => m.id === id)
+  if (!meal) return
+  if (type === 'pre') meal._editingPre = false
+  else meal._editingPost = false
+  render()
+}
+
+function saveHistoryGluco(id, type, inputId) {
+  const meal = state.meals.find(m => m.id === id)
+  if (!meal) return
+  const inp = document.getElementById(inputId)
+  const val = inp ? parseFloat(inp.value) : NaN
+  if (isNaN(val) || val < 40 || val > 600) {
+    if (inp) { inp.style.borderColor = 'var(--danger)'; inp.focus() }
+    return
+  }
+  const reading = { value: val, ts: new Date().toISOString() }
+  if (type === 'pre') {
+    meal.preGlucose = reading
+    meal._editingPre = false
+  } else {
+    meal.postGlucose = reading
+    meal._editingPost = false
+  }
+  // Recalculate effective ICR if we now have both readings
+  if (meal.preGlucose && meal.postGlucose && meal.dose) {
+    const rise = meal.postGlucose.value - meal.preGlucose.value
+    const insulinGiven = meal.dose.total
+    const carbs = meal.nutrition.carbs
+    if (rise > 0 && insulinGiven > 0 && carbs > 0) {
+      meal.effectiveICR = Math.round((carbs / insulinGiven) * (1 / (1 + rise / 100)) * 10) / 10
+    } else {
+      meal.effectiveICR = null
+    }
+  }
+  save()
+  render()
+}
+
+function clearHistoryGluco(id, type) {
+  const meal = state.meals.find(m => m.id === id)
+  if (!meal) return
+  if (type === 'pre') { meal.preGlucose = null; meal._editingPre = false }
+  else { meal.postGlucose = null; meal._editingPost = false }
+  meal.effectiveICR = null
+  save()
+  render()
+}
+
+function saveICR() {
+  const val = parseFloat(document.getElementById('icrInput')?.value)
+  if (isNaN(val) || val <= 0) return
+  state.settings.icr = val
+  save()
+  document.getElementById('icrDisplay').textContent = val
+  const btn = document.getElementById('saveIcrBtn')
+  if (btn) { btn.textContent = '✓ Saved'; setTimeout(() => { btn.textContent = 'Save ICR' }, 2000) }
+}
+
+function saveGeminiKey() {
+  const inp = document.getElementById('geminiKeyInput')
+  if (!inp) return
+  const key = inp.value.trim()
+  if (!key) { localStorage.removeItem('cl_gemini_key'); render(); return }
+  localStorage.setItem('cl_gemini_key', key)
+  const btn = document.getElementById('saveGeminiBtn')
+  if (btn) { btn.textContent = '✓ Saved'; setTimeout(() => { btn.textContent = 'Save Key'; render() }, 1500) }
+  render()
+}
+
+function saveGeminiModel() {
+  const inp = document.getElementById('geminiModelInput')
+  if (!inp) return
+  const v = inp.value.trim()
+  if (v) localStorage.setItem('cl_gemini_model', v)
+  else localStorage.removeItem('cl_gemini_model')
+  const btn = document.getElementById('saveModelBtn')
+  if (btn) { btn.textContent = '✓ Saved'; setTimeout(() => { btn.textContent = 'Save Model' }, 1500) }
+}
+
+function saveMaxBolus() {
+  const val = parseFloat(document.getElementById('maxBolusInput')?.value)
+  if (isNaN(val) || val < 1) { notify('Enter a max bolus of at least 1 unit.', 'err'); return }
+  state.settings.maxBolus = Math.min(100, val)
+  save()
+  const btn = document.getElementById('saveMaxBolusBtn')
+  if (btn) { btn.textContent = '✓ Saved'; setTimeout(() => { btn.textContent = 'Save' }, 2000) }
+}
+
+
+// ── GLUCOSE INPUT ────────────────────────────────────────────
+function setCurrentGlucose(val) {
+  const num = parseFloat(val)
+  state.log.currentGlucose = isNaN(num) || num <= 0 ? null : num
+  // Re-render just the strip area without full render for responsiveness
+  const strip = document.querySelector('.lgs-right')
+  if (strip) {
+    const correction = state.log.currentGlucose ? Math.round(calcCorrectionDose(state.log.currentGlucose)) : 0
+    strip.innerHTML = `
+      ${correction > 0 ? `<div class="lgs-corr"><span class="lgs-corr-val">+${correction}u</span><span class="lgs-corr-lbl">correction</span></div>` : ''}
+      ${state.log.currentGlucose && state.log.currentGlucose < 70 ? `<div class="lgs-alert">⚠ Low — treat first</div>` : ''}
+    `
+  }
+}
+
+// ── FAVOURITES ────────────────────────────────────────────────
+function saveAsFavourite() {
+  const L = state.log
+  if (!L.nutrition) return
+  const fav = {
+    id: crypto.randomUUID(),
+    name: L.nutrition.mealDescription,
+    description: L.description || L.nutrition.mealDescription,
+    nutrition: L.nutrition,
+    dose: L.dose,
+    savedAt: new Date().toISOString()
+  }
+  state.favourites.unshift(fav)
+  if (state.favourites.length > 20) state.favourites = state.favourites.slice(0, 20)
+  save()
+  render()
+}
+
+function useFavourite(favId) {
+  const fav = state.favourites.find(f => f.id === favId)
+  if (!fav) return
+  state.log.description = fav.description
+  state.log.nutrition = { ...fav.nutrition }
+  state.log.dose = calcDose(fav.nutrition.carbs, state.settings.icr, fav.nutrition.isSplit, state.log.currentGlucose)
+  const mealId = crypto.randomUUID()
+  state.log.currentMealId = mealId
+  const meal = {
+    id: mealId, timestamp: new Date().toISOString(),
+    description: fav.description,
+    imageB64: null, imageMime: 'image/jpeg',
+    nutrition: state.log.nutrition,
+    dose: state.log.dose,
+    icr: state.settings.icr,
+    preGlucose: state.log.currentGlucose ? { value: state.log.currentGlucose, ts: new Date().toISOString() } : null,
+    postGlucose: null, effectiveICR: null
+  }
+  state.meals.unshift(meal)
+  save()
+  state.log.phase = 'result'
+  render()
+}
+
+function deleteFavourite(id) {
+  state.favourites = state.favourites.filter(f => f.id !== id)
+  save()
+  render()
+}
+
+// ── NARRATIVE ─────────────────────────────────────────────────
+async function generateNarrative() {
+  if (state.meals.length < 3) { alert('Log at least 3 meals to generate insights.'); return }
+  state.narrative.loading = true
+  render()
+  try {
+    const summary = state.meals.slice(0, 30).map(m => ({
+      meal: m.nutrition.mealDescription,
+      carbs: m.nutrition.carbs,
+      fat: m.nutrition.fat,
+      dose: m.dose.total,
+      split: m.dose.split,
+      gi: m.nutrition.glycemicIndex,
+      preGlu: m.preGlucose?.value,
+      postGlu: m.postGlucose?.value,
+      rise: m.preGlucose && m.postGlucose ? m.postGlucose.value - m.preGlucose.value : null,
+      time: new Date(m.timestamp).getHours()
+    }))
+    const prompt = `You are a diabetes clinical nutritionist reviewing a Type 1 diabetic's meal logs. Analyse these ${summary.length} meals and write a concise, practical 3–4 paragraph narrative report covering: (1) eating patterns and carb distribution, (2) glucose response trends if data available, (3) split dose frequency and whether it seems appropriate, (4) one specific actionable recommendation. Write in plain English, be direct, be specific with numbers. DO NOT use bullet points or headers. Meal data: ${JSON.stringify(summary)}`
+    const text = await callGemini([{ text: prompt }])
+    state.narrative = { text, loading: false, generatedAt: new Date().toISOString() }
+    save()
+  } catch(e) {
+    state.narrative.loading = false
+    alert('Could not generate insights: ' + e.message)
+  }
+  render()
+}
+
+// ── PDF EXPORT ────────────────────────────────────────────────
+function exportPDF() {
+  const meals = state.meals
+  if (!meals.length) { alert('No meals to export.'); return }
+
+  const now = new Date()
+  const thirtyAgo = new Date(now); thirtyAgo.setDate(thirtyAgo.getDate()-30)
+  const recent = meals.filter(m => new Date(m.timestamp) > thirtyAgo)
+  const avg = arr => arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length*10)/10 : 0
+
+  const avgCarbs = avg(recent.map(m => m.nutrition.carbs))
+  const avgDose  = avg(recent.map(m => m.dose.total))
+  const splits   = recent.filter(m => m.dose.split).length
+  const withGlu  = recent.filter(m => m.preGlucose && m.postGlucose)
+  const avgRise  = avg(withGlu.map(m => m.postGlucose.value - m.preGlucose.value))
+
+  const rows = recent.slice(0,50).map(m => `
+    <tr>
+      <td>${new Date(m.timestamp).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</td>
+      <td>${new Date(m.timestamp).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</td>
+      <td>${escapeHTML((m.description||m.nutrition.mealDescription||'').substring(0,35))}</td>
+      <td>${m.nutrition.carbs}g</td>
+      <td>${m.nutrition.fat}g</td>
+      <td>${m.dose.total}u${m.dose.split?' ⚡':''}</td>
+      <td>${m.preGlucose?.value||'—'}</td>
+      <td>${m.postGlucose?.value||'—'}</td>
+      <td>${m.preGlucose&&m.postGlucose?'+'+(m.postGlucose.value-m.preGlucose.value):'—'}</td>
+    </tr>`).join('')
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>CarbLens Report — ${now.toLocaleDateString('en-GB')}</title>
+  <style>
+    body{font-family:Arial,sans-serif;margin:32px;color:#111;font-size:12px}
+    h1{font-size:20px;margin-bottom:4px}
+    .sub{color:#666;margin-bottom:24px;font-size:12px}
+    .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+    .sc{background:#f5f5f5;border-radius:8px;padding:12px;text-align:center}
+    .sv{font-size:22px;font-weight:bold;color:#0d5c2b}
+    .sl{font-size:10px;color:#666;margin-top:2px;text-transform:uppercase}
+    table{width:100%;border-collapse:collapse;font-size:11px}
+    th{background:#0d5c2b;color:white;padding:7px 8px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.5px}
+    td{padding:6px 8px;border-bottom:1px solid #eee}
+    tr:nth-child(even) td{background:#f9f9f9}
+    .disclaimer{margin-top:24px;font-size:10px;color:#999;border-top:1px solid #eee;padding-top:12px}
+    @media print{body{margin:16px}}
+  </style></head><body>
+  <h1>CarbLens Diabetes Report</h1>
+  <div class="sub">Generated ${now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'})} · Last 30 days · ${recent.length} meals · ICR 1:${state.settings.icr}</div>
+  <div class="summary">
+    <div class="sc"><div class="sv">${avgCarbs}g</div><div class="sl">Avg carbs/meal</div></div>
+    <div class="sc"><div class="sv">${avgDose}u</div><div class="sl">Avg insulin dose</div></div>
+    <div class="sc"><div class="sv">${splits}</div><div class="sl">Split dose meals</div></div>
+    <div class="sc"><div class="sv">${withGlu.length?'+'+avgRise:'—'}</div><div class="sl">Avg glucose rise</div></div>
+  </div>
+  <table>
+    <thead><tr><th>Date</th><th>Time</th><th>Meal</th><th>Carbs</th><th>Fat</th><th>Dose</th><th>Pre</th><th>Post</th><th>Rise</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <div class="disclaimer">This report is generated by CarbLens for personal reference only. Always verify insulin doses with your healthcare provider. CarbLens does not replace medical advice.</div>
+  </body></html>`
+
+  const blob = new Blob([html], {type:'text/html'})
+  const url = URL.createObjectURL(blob)
+  const w = window.open(url, '_blank')
+  if (w) { setTimeout(() => { w.print(); URL.revokeObjectURL(url) }, 800) }
+  else {
+    // Fallback — download as HTML file (user can open and print)
+    const a = document.createElement('a')
+    a.href = url; a.download = `carblens-report-${now.toISOString().slice(0,10)}.html`
+    a.click(); URL.revokeObjectURL(url)
+  }
+}
+
+// ── RESTORE BACKUP ────────────────────────────────────────────
+function restoreBackup(input) {
+  const file = input.files[0]
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = e => {
+    try {
+      const d = JSON.parse(e.target.result)
+      if (!d.meals || !Array.isArray(d.meals)) throw new Error('Invalid backup file')
+      if (!confirm(`Restore ${d.meals.length} meals from backup? This will merge with your existing ${state.meals.length} meals.`)) return
+      // Merge — deduplicate by id. Backups omit photo data, so drop any
+      // placeholder image payload and clear the hasImage flag on restored meals.
+      const existing = new Set(state.meals.map(m => m.id))
+      const newMeals = d.meals.filter(m => !existing.has(m.id)).map(m => {
+        const cleaned = { ...m, _imgSaved: false }
+        if (typeof cleaned.imageB64 !== 'string' || !cleaned.imageB64.match(/^[A-Za-z0-9+/=]+$/) || cleaned.imageB64.length < 100) {
+          cleaned.imageB64 = null; cleaned.hasImage = false
+        }
+        return cleaned
+      })
+      state.meals = [...state.meals, ...newMeals].sort((a,b) => new Date(b.timestamp)-new Date(a.timestamp))
+      if (d.settings) state.settings = { ...state.settings, ...d.settings }
+      if (d.favourites) state.favourites = [...(state.favourites||[]), ...(d.favourites||[])]
+      save()
+      render()
+      alert(`✓ Restored ${newMeals.length} new meals.`)
+    } catch(err) {
+      alert('Could not restore backup: ' + err.message)
+    }
+  }
+  reader.readAsText(file)
+}
+
+// ── CORRECTION SETTINGS ───────────────────────────────────────
+function saveCorrectionSettings() {
+  const isf = parseFloat(document.getElementById('isfInput')?.value)
+  const target = parseFloat(document.getElementById('targetGluInput')?.value)
+  if (!isNaN(isf) && isf > 0) state.settings.isf = isf
+  if (!isNaN(target) && target > 0) state.settings.targetGlucose = target
+  save()
+  const btn = document.getElementById('saveCorrBtn')
+  if (btn) { btn.textContent = '✓ Saved'; setTimeout(() => { btn.textContent = 'Save' }, 2000) }
+}
+
+
+// ── SPEECH TO TEXT ───────────────────────────────────────────
+let _sttRecognition = null
+let _sttListening = false
+
+function toggleSpeech() {
+  if (_sttListening) {
+    stopSpeech()
+    return
+  }
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+  if (!SpeechRecognition) {
+    alert('Speech recognition is not supported in this browser. Try Chrome on Android.')
+    return
+  }
+  const r = new SpeechRecognition()
+  r.continuous = false
+  r.interimResults = true
+  r.lang = 'en-GB'
+
+  const btn = document.getElementById('sttBtn')
+  const icon = document.getElementById('sttIcon')
+  const ta = document.getElementById('mealDesc')
+  const baseText = state.log.description
+
+  r.onstart = () => {
+    _sttListening = true
+    if (btn) btn.classList.add('listening')
+    if (icon) icon.innerHTML = ICONS.stop
+  }
+
+  r.onresult = (e) => {
+    const transcript = Array.from(e.results).map(r => r[0].transcript).join('')
+    const newText = baseText ? baseText + ' ' + transcript : transcript
+    if (ta) ta.value = newText
+    state.log.description = newText
+    updateAnalyzeBtn()
+  }
+
+  r.onerror = (e) => {
+    stopSpeech()
+    if (e.error !== 'no-speech') alert('Microphone error: ' + e.error)
+  }
+
+  r.onend = () => { stopSpeech() }
+
+  _sttRecognition = r
+  r.start()
+}
+
+function stopSpeech() {
+  _sttListening = false
+  if (_sttRecognition) { try { _sttRecognition.stop() } catch(e) { console.warn('speech stop failed', e) } _sttRecognition = null }
+  const btn = document.getElementById('sttBtn')
+  const icon = document.getElementById('sttIcon')
+  if (btn) btn.classList.remove('listening')
+  if (icon) icon.innerHTML = ICONS.mic
+  // Finalise state from textarea value
+  const ta = document.getElementById('mealDesc')
+  if (ta) { state.log.description = ta.value; updateAnalyzeBtn() }
+}
+
+// ── REFINE ────────────────────────────────────────────────────
+function openRefine() {
+  state.log.showRefine = true
+  state.log.refineError = null
+  render()
+}
+
+function closeRefine() {
+  state.log.showRefine = false
+  state.log.refineContext = ''
+  state.log.refineError = null
+  render()
+}
+
+function submitRefine() {
+  const input = document.getElementById('refineInput')
+  const ctx = input ? input.value.trim() : state.log.refineContext
+  if (!ctx) return
+  state.log.refineContext = ctx
+  doRefineAnalysis(ctx)
+}
+
+// ── CLEAR HISTORY ────────────────────────────────────────────
+function promptClear() {
+  state._confirmClear = true
+  render()
+}
+
+function cancelClear() {
+  state._confirmClear = false
+  render()
+}
+
+function confirmClear() {
+  state.meals = []
+  state._confirmClear = false
+  save()
+  ImageStore.clear().catch(e => console.error('CarbLens: failed to clear image store', e))
+  render()
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+document.getElementById('icrDisplay').textContent = state.settings.icr
+render()
+// Migrate any legacy inline images (older localStorage format) into IndexedDB,
+// then strip them from localStorage on the next save.
+if (state.meals.some(m => m.imageB64 && !m._imgSaved)) save()
+// Load image payloads from IndexedDB and re-render once available.
+hydrateImages()
+
+// ── SERVICE WORKER REGISTRATION ───────────────────────────────
+// Registers the external sw.js (same origin) for offline app-shell caching.
+// Requires https or localhost; fails gracefully on file:// .
+if ('serviceWorker' in navigator) {
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    window._installPrompt = e;
+    showInstallBanner();
+  });
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js', { scope: './' })
+      .then(() => console.log('CarbLens SW registered'))
+      .catch(err => console.log('SW registration failed (expected on file://):', err));
+  });
+}
+
+function showInstallBanner() {
+  if (localStorage.getItem('cl_install_dismissed')) return;
+  const banner = document.createElement('div');
+  banner.id = 'installBanner';
+  banner.style.cssText = `
+    position:fixed;bottom:78px;left:50%;transform:translateX(-50%);
+    width:calc(100% - 36px);max-width:444px;
+    background:#101a14;border:1.5px solid #3ddc6e;border-radius:14px;
+    padding:14px 16px;display:flex;align-items:center;gap:12px;
+    z-index:200;box-shadow:0 8px 32px rgba(0,0,0,0.6);
+    font-family:'Syne',sans-serif;animation:slideup .3s ease;
+  `;
+  banner.innerHTML = `
+    <span style="font-size:28px;flex-shrink:0">📲</span>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:14px;font-weight:700;color:#e4ede6">Install CarbLens</div>
+      <div style="font-size:11px;color:#6e9278;font-family:'DM Mono',monospace;margin-top:2px">Add to home screen for the full app experience</div>
+    </div>
+    <button onclick="doInstall()" style="background:#3ddc6e;color:#09100d;border:none;border-radius:9px;font-weight:700;font-size:13px;padding:8px 14px;cursor:pointer;flex-shrink:0;font-family:'Syne',sans-serif">Install</button>
+    <button onclick="dismissInstall()" style="background:none;border:none;color:#3d5c47;font-size:18px;cursor:pointer;padding:2px 4px;flex-shrink:0">✕</button>
+  `;
+  document.body.appendChild(banner);
+}
+
+function doInstall() {
+  if (!window._installPrompt) return;
+  window._installPrompt.prompt();
+  window._installPrompt.userChoice.then(r => {
+    if (r.outcome === 'accepted') dismissInstall();
+    window._installPrompt = null;
+  });
+}
+
+function dismissInstall() {
+  const b = document.getElementById('installBanner');
+  if (b) b.remove();
+  localStorage.setItem('cl_install_dismissed', '1');
+}
+
+// iOS install hint (Safari doesn't support beforeinstallprompt)
+function showiOSHint() {
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone;
+  if (!isIOS || isStandalone || localStorage.getItem('cl_install_dismissed')) return;
+  const hint = document.createElement('div');
+  hint.style.cssText = `
+    position:fixed;bottom:78px;left:50%;transform:translateX(-50%);
+    width:calc(100% - 36px);max-width:444px;
+    background:#101a14;border:1.5px solid #5fa8f5;border-radius:14px;
+    padding:14px 16px;z-index:200;
+    font-family:'Syne',sans-serif;animation:slideup .3s ease;
+  `;
+  hint.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <span style="font-size:22px">📲</span>
+      <div style="font-size:14px;font-weight:700;color:#e4ede6">Install CarbLens</div>
+      <button onclick="this.parentElement.parentElement.remove();localStorage.setItem('cl_install_dismissed','1')" style="margin-left:auto;background:none;border:none;color:#3d5c47;font-size:18px;cursor:pointer">✕</button>
+    </div>
+    <div style="font-size:12px;color:#6e9278;font-family:'DM Mono',monospace;line-height:1.6">
+      Tap <b style="color:#5fa8f5">Share</b> at the bottom of Safari, then tap <b style="color:#5fa8f5">Add to Home Screen</b>
+    </div>
+  `;
+  document.body.appendChild(hint);
+}
+
+window.addEventListener('load', () => { setTimeout(showiOSHint, 1500); });
+</script>
+</body>
+</html>
