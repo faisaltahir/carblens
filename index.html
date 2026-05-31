@@ -115,7 +115,8 @@ button{cursor:pointer;font-family:var(--sans);border:none;background:none}
 .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;display:flex;background:var(--surface);border-top:1px solid var(--border);padding:6px 0 calc(6px + env(safe-area-inset-bottom,0px))}
 .ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;color:var(--dim);transition:.2s color}
 .ni.on{color:var(--accent)}
-.ni-ic{font-size:17px}
+.ni-ic{font-size:17px;display:flex;align-items:center;justify-content:center;height:22px}
+.ni-ic svg{width:21px;height:21px;display:block}
 .ni-lb{font-size:9px;font-family:var(--mono);letter-spacing:.5px}
 
 /* PAGE COMMON */
@@ -157,11 +158,19 @@ textarea.field{resize:none;line-height:1.5}
 .photo-btn-wrap{position:relative;border:1.5px dashed var(--border-b);border-radius:var(--r);background:var(--surface);overflow:hidden;transition:.2s}
 .photo-btn-wrap:active{background:var(--accent-g);border-color:var(--accent)}
 .ph-btn-inner{display:flex;flex-direction:column;align-items:center;gap:8px;padding:22px 16px;color:var(--muted);font-family:var(--mono);font-size:12px;pointer-events:none;text-align:center}
-.ph-btn-ico{font-size:28px}
+.ph-btn-ico{font-size:28px;display:flex;align-items:center;justify-content:center}
+.ph-btn-ico svg{width:26px;height:26px;display:block}
 .ph-file-inp{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:0}
 
 /* ERROR */
 .err-box{background:var(--danger-d);border:1px solid var(--danger);border-radius:10px;color:var(--danger);padding:11px 15px;font-size:12px;font-family:var(--mono);line-height:1.5}
+
+/* DOSE SAFETY WARNING */
+.dose-warn{background:var(--danger-d);border:1.5px solid var(--danger);border-radius:var(--r);padding:13px 15px}
+.dose-warn-hdr{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--danger);margin-bottom:8px}
+.dose-warn ul{list-style:none;display:flex;flex-direction:column;gap:6px}
+.dose-warn li{font-size:12px;font-family:var(--mono);color:var(--danger);line-height:1.5;padding-left:14px;position:relative}
+.dose-warn li::before{content:'›';position:absolute;left:0}
 
 /* LOADING */
 .dots span{animation:blink 1.2s infinite}
@@ -397,9 +406,10 @@ textarea.field{resize:none;line-height:1.5}
 @keyframes slideup{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 /* ── SPEECH TO TEXT ── */
 .stt-wrap{position:relative}
-.stt-btn{position:absolute;bottom:10px;right:10px;background:var(--accent-d);border:1.5px solid var(--accent);border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s;font-size:17px;z-index:1;box-shadow:0 2px 8px rgba(61,220,110,0.2)}
-.stt-btn:active{background:var(--accent);}
-.stt-btn.listening{background:var(--danger);border-color:var(--danger);animation:pulse 1s infinite;box-shadow:0 2px 12px rgba(240,112,112,0.4)}
+.stt-btn{position:absolute;bottom:10px;right:10px;background:var(--accent-d);border:1.5px solid var(--accent);border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s;color:var(--accent);z-index:1;box-shadow:0 2px 8px rgba(61,220,110,0.2)}
+.stt-btn svg{width:19px;height:19px;display:block}
+.stt-btn:active{background:var(--accent);color:var(--bg)}
+.stt-btn.listening{background:var(--danger);border-color:var(--danger);color:#fff;animation:pulse 1s infinite;box-shadow:0 2px 12px rgba(240,112,112,0.4)}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 
 /* ── GLUCOSE STRIP (log page) ── */
@@ -534,6 +544,55 @@ textarea.field{resize:none;line-height:1.5}
 .narrative-body{font-size:13px;line-height:1.7;color:var(--muted);font-family:var(--mono)}
 .narrative-ts{font-size:10px;color:var(--dim);font-family:var(--mono);margin-top:10px;border-top:1px solid var(--border);padding-top:8px}
 
+/* ── LEGIBILITY & TAP TARGETS (overrides — keep last) ── */
+/* Raise the smallest mono labels to a readable 11px floor. */
+.tagline,.ni-lb,.or-div,.badge,.dose-hdr,.split-lb,.split-tot,.nut-u,.nut-lb,
+.notes-ttl,.day-lbl,.h-time,.hnut-l,.h-gluco-title,.h-gluco-unit,.iv-lbl,
+.iv-conf-lbl,.sec-ttl,.stat-l,.sum-l,.integ-st,.disclaim,.lgs-label,
+.lgs-corr-lbl,.lgs-alert,.fav-strip-label,.db-note,.pg-dose,.pg-carbs,
+.narrative-ts,.fav-chip-carbs,.h-notes li,.notes-card li{font-size:11px}
+.ni-lb{font-size:11px;letter-spacing:.3px}
+
+/* Comfortable touch targets (~40px) for small icon / edit / clear buttons. */
+.h-gluco-edit,.h-gluco-cancel,.narrative-close{
+  min-width:40px;min-height:40px;display:inline-flex;align-items:center;
+  justify-content:center;padding:0;font-size:16px}
+.h-gluco-save,.h-gluco-add{min-height:40px;display:inline-flex;align-items:center;justify-content:center}
+.h-gluco-add{padding:0 14px}
+.fav-del-btn{min-width:40px;min-height:40px;display:inline-flex;align-items:center;justify-content:center;background:none;border:none;color:var(--dim);cursor:pointer;font-size:16px}
+.fav-del-btn:active{color:var(--danger)}
+
+/* ── COLOUR ── */
+/* Gradient wordmark + primary action for a touch of life. */
+.logo{background:linear-gradient(92deg,#3ddc6e,#6ab4f7);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.btn-main{background:linear-gradient(95deg,#3ddc6e,#34c8a2)}
+/* Macro colour-coding — same hue for a macro everywhere (cells + stats). */
+.nm-cal{border-color:#3a2f5e;background:#150f28}
+.nm-carb{border-color:#1e5236;background:#0f2d1a}
+.nm-pro{border-color:#1d3a5c;background:#0c1e35}
+.nm-fat{border-color:#4a3c12;background:#1f1808}
+.nm-fib{border-color:#0f4a42;background:#06231f}
+.nm-sug{border-color:#4a2240;background:#210f23}
+.nm-cal .nut-val,.nm-cal .stat-v{color:#a78bfa}
+.nm-carb .nut-val,.nm-carb .stat-v{color:#3ddc6e}
+.nm-pro .nut-val,.nm-pro .stat-v{color:#6ab4f7}
+.nm-fat .nut-val,.nm-fat .stat-v{color:#f7cc4a}
+.nm-fib .nut-val,.nm-fib .stat-v{color:#2dd4bf}
+.nm-sug .nut-val,.nm-sug .stat-v{color:#f072b6}
+
+/* ── LAST MEAL (log screen reference) ── */
+.last-meal{margin-top:20px;border-top:1px solid var(--border);padding-top:14px}
+.last-meal-hd{font-size:11px;font-family:var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:9px}
+.last-meal-card{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;cursor:pointer;transition:.15s border-color}
+.last-meal-card:active{border-color:var(--accent)}
+.last-meal-thumb{width:44px;height:44px;border-radius:9px;object-fit:cover;flex-shrink:0}
+.last-meal-info{flex:1;min-width:0}
+.last-meal-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.last-meal-time{font-size:11px;font-family:var(--mono);color:var(--dim);margin-top:2px}
+.last-meal-r{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0}
+.last-meal-carbs{font-size:13px;font-weight:700;font-family:var(--mono);color:var(--accent)}
+.last-meal-dose{font-size:11px;font-family:var(--mono);color:var(--muted)}
+.last-meal-dose.sp{color:var(--split)}
 </style>
 </head>
 <body>
@@ -554,10 +613,10 @@ textarea.field{resize:none;line-height:1.5}
   <main class="main" id="main"></main>
 
   <nav class="nav">
-    <button class="ni on" id="nav-log" onclick="nav('log')"><span class="ni-ic">⊕</span><span class="ni-lb">Log</span></button>
-    <button class="ni" id="nav-history" onclick="nav('history')"><span class="ni-ic">◷</span><span class="ni-lb">History</span></button>
-    <button class="ni" id="nav-stats" onclick="nav('stats')"><span class="ni-ic">◈</span><span class="ni-lb">Stats</span></button>
-    <button class="ni" id="nav-settings" onclick="nav('settings')"><span class="ni-ic">◉</span><span class="ni-lb">Settings</span></button>
+    <button class="ni on" id="nav-log" onclick="nav('log')"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></span><span class="ni-lb">Log</span></button>
+    <button class="ni" id="nav-history" onclick="nav('history')"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg></span><span class="ni-lb">History</span></button>
+    <button class="ni" id="nav-stats" onclick="nav('stats')"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="11"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="14"/></svg></span><span class="ni-lb">Stats</span></button>
+    <button class="ni" id="nav-settings" onclick="nav('settings')"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="8" x2="13" y2="8"/><line x1="17" y1="8" x2="21" y2="8"/><circle cx="15" cy="8" r="2"/><line x1="3" y1="16" x2="9" y2="16"/><line x1="13" y1="16" x2="21" y2="16"/><circle cx="11" cy="16" r="2"/></svg></span><span class="ni-lb">Settings</span></button>
   </nav>
 </div>
 
@@ -569,7 +628,7 @@ let state = {
   page: 'log',
   meals: [],
   favourites: [], // saved meal templates
-  settings: { icr: 5.5, isf: 40, targetGlucose: 100 }, // ISF = mg/dL drop per 1u; target glucose
+  settings: { icr: 5.5, isf: 40, targetGlucose: 100, maxBolus: 25 }, // ISF = mg/dL drop per 1u; maxBolus = safety cap (u)
   _confirmClear: false,
   historyView: 'list', // 'list' | 'grid'
   narrative: { text: null, loading: false, generatedAt: null },
@@ -584,7 +643,7 @@ let state = {
     dose: null,
     clarification: null,
     clarAnswers: {},
-    currentGlucose: null,   // entered on input page, used for correction + IOB
+    currentGlucose: null,   // entered on input page, used for correction dose
     preGlucose: null,
     postGlucose: null,
     currentMealId: null,
@@ -597,28 +656,139 @@ let state = {
   }
 }
 
+// ── SHARED HELPERS ────────────────────────────────────────────
+// Escape any dynamic/user/AI-supplied string before it goes into innerHTML.
+function escapeHTML(s) {
+  if (s == null) return ''
+  return String(s).replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ))
+}
+// Coerce to a finite number within [min,max]; otherwise return fallback.
+function clampNum(v, min, max, fallback) {
+  const n = typeof v === 'number' ? v : parseFloat(v)
+  if (!isFinite(n)) return fallback
+  return Math.min(max, Math.max(min, n))
+}
+// Lightweight toast — replaces silent failures / some alert()s.
+function notify(msg, kind) {
+  try {
+    let t = document.getElementById('cl-toast')
+    if (!t) { t = document.createElement('div'); t.id = 'cl-toast'; document.body.appendChild(t) }
+    const color = kind === 'err' ? '#f47878' : kind === 'ok' ? '#3ddc6e' : '#6ab4f7'
+    t.style.cssText = `position:fixed;bottom:90px;left:50%;transform:translateX(-50%);max-width:440px;width:calc(100% - 36px);z-index:300;background:#101a14;border:1.5px solid ${color};color:${color};border-radius:12px;padding:12px 16px;font-family:'DM Mono',monospace;font-size:12px;line-height:1.5;box-shadow:0 8px 32px rgba(0,0,0,.6);animation:slideup .3s ease`
+    t.textContent = msg
+    clearTimeout(window._toastTimer)
+    window._toastTimer = setTimeout(() => { if (t) t.remove() }, kind === 'err' ? 6000 : 3500)
+  } catch (e) { console.warn('notify failed', e) }
+}
+
+// ── ICONS ─────────────────────────────────────────────────────
+// Inline stroke icons (Lucide-style). They inherit colour via currentColor
+// and size via CSS, so they look identical on every device — unlike emoji.
+const ICONS = {
+  log:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>',
+  history:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>',
+  stats:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="11"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="14"/></svg>',
+  settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="8" x2="13" y2="8"/><line x1="17" y1="8" x2="21" y2="8"/><circle cx="15" cy="8" r="2"/><line x1="3" y1="16" x2="9" y2="16"/><line x1="13" y1="16" x2="21" y2="16"/><circle cx="11" cy="16" r="2"/></svg>',
+  mic:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10v1a7 7 0 0 0 14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>',
+  stop:     '<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="3" fill="currentColor"/></svg>',
+  camera:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3l2-3h8l2 3h3a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>',
+  gallery:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.6"/><path d="M21 15l-5-5L5 21"/></svg>'
+}
+
+// ── IMAGE STORE (IndexedDB) ───────────────────────────────────
+// Photos are large; keeping them out of localStorage avoids blowing the
+// ~5MB quota. localStorage holds only meal metadata + a hasImage flag.
+const ImageStore = (() => {
+  let dbPromise = null
+  function open() {
+    if (dbPromise) return dbPromise
+    dbPromise = new Promise((resolve, reject) => {
+      let req
+      try { req = indexedDB.open('carblens', 1) }
+      catch (e) { return reject(e) }
+      req.onupgradeneeded = () => { req.result.createObjectStore('images') }
+      req.onsuccess = () => resolve(req.result)
+      req.onerror = () => reject(req.error)
+    })
+    return dbPromise
+  }
+  async function withStore(mode, fn) {
+    const db = await open()
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('images', mode)
+      const req = fn(tx.objectStore('images'))
+      tx.oncomplete = () => resolve(req && req.result)
+      tx.onerror = () => reject(tx.error)
+      tx.onabort = () => reject(tx.error)
+    })
+  }
+  return {
+    set: (k, v) => withStore('readwrite', s => s.put(v, k)),
+    get: (k) => withStore('readonly', s => s.get(k)),
+    del: (k) => withStore('readwrite', s => s.delete(k)),
+    clear: () => withStore('readwrite', s => s.clear())
+  }
+})()
+
 // ── PERSISTENCE ───────────────────────────────────────────────
 function load() {
   try {
     const raw = localStorage.getItem('carblens_v2')
     if (!raw) return
     const d = JSON.parse(raw)
-    if (d.meals) state.meals = d.meals
+    // Mark meals whose image is already persisted (new format) so we don't
+    // re-write it. Legacy data has imageB64 inline → migrated on first save().
+    if (d.meals) state.meals = d.meals.map(m => ({ ...m, _imgSaved: !!m.hasImage }))
     if (d.settings) state.settings = { ...state.settings, ...d.settings }
     if (d.favourites) state.favourites = d.favourites
     if (d.narrative) state.narrative = d.narrative
-  } catch(e) {}
+  } catch (e) {
+    console.error('CarbLens: failed to load saved data', e)
+    notify('Could not load your saved data — it may be corrupted.', 'err')
+  }
 }
 
 function save() {
+  // 1) Persist images to IndexedDB (only those not yet stored).
+  state.meals.forEach(m => {
+    if (m.imageB64 && !m._imgSaved) {
+      ImageStore.set(m.id, m.imageB64)
+        .then(() => { m._imgSaved = true })
+        .catch(e => { console.error('CarbLens: image save failed', m.id, e); notify('A meal photo could not be saved to local storage.', 'err') })
+    }
+  })
+  // 2) Persist metadata to localStorage WITHOUT the base64 image payloads.
   try {
+    const meals = state.meals.map(m => {
+      const { imageB64, _imgSaved, _expanded, _editingPre, _editingPost, ...rest } = m
+      return { ...rest, hasImage: !!(imageB64 || m.hasImage) }
+    })
     localStorage.setItem('carblens_v2', JSON.stringify({
-      meals: state.meals,
+      meals,
       settings: state.settings,
       favourites: state.favourites,
       narrative: state.narrative
     }))
-  } catch(e) {}
+  } catch (e) {
+    console.error('CarbLens: save failed', e)
+    notify('Could not save — device storage may be full.', 'err')
+  }
+}
+
+// Pull image payloads back into memory from IndexedDB, then re-render.
+async function hydrateImages() {
+  let changed = false
+  for (const m of state.meals) {
+    if (m.hasImage && !m.imageB64) {
+      try {
+        const img = await ImageStore.get(m.id)
+        if (img) { m.imageB64 = img; m._imgSaved = true; changed = true }
+      } catch (e) { console.error('CarbLens: image load failed', m.id, e) }
+    }
+  }
+  if (changed) render()
 }
 
 load()
@@ -639,31 +809,57 @@ function nav(page) {
 // protein load, glycaemic index, dish type — rather than keyword matching.
 // This handles nihari, naan, biryani, dim sum, etc. correctly without lists.
 
+// Plausibility ceiling for a single meal's carbohydrate estimate.
+const MAX_CARBS_PER_MEAL = 300
+
+// Correction returned as a PRECISE value; rounding to whole units happens in calcDose.
 function calcCorrectionDose(currentGlucose) {
-  if (!currentGlucose) return 0
-  const target = state.settings.targetGlucose || 100
-  const isf = state.settings.isf || 40
-  const excess = currentGlucose - target
+  const glu = clampNum(currentGlucose, 0, 1000, 0)
+  if (!glu) return 0
+  const target = clampNum(state.settings.targetGlucose, 40, 400, 100)
+  const isf = clampNum(state.settings.isf, 5, 300, 40)
+  const excess = glu - target
   if (excess <= 0) return 0
-  return Math.round((excess / isf) * 10) / 10
+  return excess / isf
 }
 
+// All deliverable doses are rounded to WHOLE units (pens here deliver 1u steps).
+// A configurable max-bolus cap and carb-plausibility check guard against bad
+// inputs (e.g. an AI carb hallucination) producing a dangerously large dose.
 function calcDose(carbs, icr, isSplit, currentGlucose) {
-  const foodDose = Math.round((carbs / icr) * 10) / 10
-  const correctionDose = calcCorrectionDose(currentGlucose)
-  const totalDose = Math.round((foodDose + correctionDose) * 10) / 10
+  const safeICR = clampNum(icr, 1, 50, 5.5)
+  const rawCarbs = clampNum(carbs, 0, 100000, 0)
+  const safeCarbs = Math.min(rawCarbs, MAX_CARBS_PER_MEAL)
+  const maxBolus = clampNum(state.settings.maxBolus, 1, 100, 25)
 
-  if (isSplit && foodDose >= 3) {
-    const now = Math.round(foodDose * 0.6 * 10) / 10
-    const later = Math.round((foodDose - now) * 10) / 10
+  const correctionDose = Math.round(calcCorrectionDose(currentGlucose))
+  let foodDose = Math.round(safeCarbs / safeICR)
+  let total = foodDose + correctionDose
+
+  const warnings = []
+  if (rawCarbs > MAX_CARBS_PER_MEAL) {
+    warnings.push(`Carb estimate (${Math.round(rawCarbs)}g) is unusually high for one meal and was capped at ${MAX_CARBS_PER_MEAL}g. Double-check the meal before dosing.`)
+  }
+
+  let capped = false
+  if (total > maxBolus) {
+    capped = true
+    warnings.push(`Calculated dose exceeds your ${maxBolus}u max-bolus safety limit and has been capped. Verify manually with your care team before injecting.`)
+    total = maxBolus
+    foodDose = Math.max(0, total - correctionDose) // keep breakdown consistent with the capped total
+  }
+
+  // Split only when not capped (a capped dose is an alert situation, shown whole).
+  if (isSplit && foodDose >= 3 && !capped) {
+    const nowFood = Math.round(foodDose * 0.6)
+    const laterFood = Math.max(0, foodDose - nowFood)
     return {
-      total: totalDose,
-      foodDose, correctionDose,
-      now: Math.round((now + correctionDose) * 10) / 10,
-      later, delay: 90, split: true
+      total, foodDose, correctionDose,
+      now: nowFood + correctionDose,
+      later: laterFood, delay: 90, split: true, capped, warnings
     }
   }
-  return { total: totalDose, foodDose, correctionDose, split: false }
+  return { total, foodDose, correctionDose, split: false, capped, warnings }
 }
 
 // ── CLIENT-SIDE IMAGE COMPRESSION ────────────────────────────────────────────
@@ -684,22 +880,90 @@ async function compressImage(b64, mime) {
   })
 }
 
+// Default model is configurable in Settings so a renamed/retired preview model
+// doesn't silently break the app. The key is sent as a header, never in the URL
+// (URLs leak into history, referrers, and proxy logs).
+const DEFAULT_GEMINI_MODEL = 'gemini-3-flash-preview'
+function geminiModel() {
+  return (localStorage.getItem('cl_gemini_model') || '').trim() || DEFAULT_GEMINI_MODEL
+}
+
 async function callGemini(parts) {
   const key = localStorage.getItem('cl_gemini_key') || ''
   if (!key) throw new Error('No Gemini API key set. Go to Settings → paste your key from aistudio.google.com')
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${key}`
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(geminiModel())}:generateContent`
   const body = { contents: [{ parts }] }
-  const r = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  })
-  const d = await r.json()
-  if (!r.ok || d.error) {
-    const msg = d.error?.message || JSON.stringify(d.error || d)
+
+  let r, d
+  try {
+    r = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+      body: JSON.stringify(body)
+    })
+  } catch (e) {
+    throw new Error('Network error contacting Gemini. Check your connection and try again.')
+  }
+  try { d = await r.json() } catch (e) { d = {} }
+
+  if (!r.ok || (d && d.error)) {
+    const msg = (d && d.error && d.error.message) ? d.error.message : ('HTTP ' + r.status)
     throw new Error('Gemini error: ' + msg)
   }
-  return d.candidates[0].content.parts[0].text.trim().replace(/```json|```/g, '').trim()
+
+  // Defensive: the response may be empty if the prompt was blocked, quota hit, etc.
+  const cand = d && d.candidates && d.candidates[0]
+  const text = cand && cand.content && cand.content.parts && cand.content.parts[0] && cand.content.parts[0].text
+  if (typeof text !== 'string') {
+    const reason = (cand && cand.finishReason) || (d && d.promptFeedback && d.promptFeedback.blockReason)
+    throw new Error(reason
+      ? `Gemini returned no usable result (${reason}). Try rephrasing or using a clearer photo.`
+      : 'Gemini returned an empty response. Please try again.')
+  }
+  return text.trim().replace(/```json|```/g, '').trim()
+}
+
+// Robust JSON parsing — models occasionally wrap or prepend text.
+function parseModelJSON(txt) {
+  try { return JSON.parse(txt) }
+  catch (e) {
+    const m = txt && txt.match(/\{[\s\S]*\}/)
+    if (m) { try { return JSON.parse(m[0]) } catch (e2) { /* fall through to friendly error below */ } }
+    throw new Error('The AI returned a response we could not read. Please try again.')
+  }
+}
+
+// Validate + clamp the model's nutrition JSON before any of it reaches dose math.
+// Never trust raw model output: missing/negative/NaN/string values are coerced
+// into safe ranges so a bad field can't produce a garbage ("NaNu") dose.
+function sanitizeNutrition(p) {
+  p = p || {}
+  return {
+    calories:      clampNum(p.calories, 0, 10000, 0),
+    carbs:         clampNum(p.carbs,    0, 100000, 0),
+    protein:       clampNum(p.protein,  0, 1000, 0),
+    fat:           clampNum(p.fat,      0, 1000, 0),
+    fiber:         clampNum(p.fiber,    0, 500, 0),
+    sugar:         clampNum(p.sugar,    0, 100000, 0),
+    confidence:    ['high', 'medium', 'low'].includes(p.confidence) ? p.confidence : 'low',
+    glycemicIndex: ['low', 'medium', 'high'].includes(p.glycemicIndex) ? p.glycemicIndex : 'medium',
+    mealDescription: typeof p.mealDescription === 'string' && p.mealDescription.trim() ? p.mealDescription.slice(0, 300) : 'Meal',
+    notes:         Array.isArray(p.notes) ? p.notes.filter(n => typeof n === 'string').slice(0, 12) : [],
+    splitDose:     p.splitDose === true,
+    splitReason:   typeof p.splitReason === 'string' ? p.splitReason.slice(0, 500) : ''
+  }
+}
+
+// Normalise clarification questions: deterministic safe ids, validated shape.
+function sanitizeClarification(raw) {
+  const qs = Array.isArray(raw.questions) ? raw.questions : []
+  const questions = qs.slice(0, 6).map((q, i) => ({
+    id: 'q' + i,
+    question: typeof q.question === 'string' ? q.question.slice(0, 200) : 'Can you describe this?',
+    type: q.type === 'choice' ? 'choice' : 'text',
+    options: Array.isArray(q.options) ? q.options.map(o => String(o).slice(0, 60)).slice(0, 8) : undefined
+  }))
+  return { questions, partial: typeof raw.partialDescription === 'string' ? raw.partialDescription.slice(0, 200) : '' }
 }
 
 const NUTRITION_PROMPT = (meal, extra) => `You are a clinical nutrition AI for a Type 1 diabetic on a basal-bolus insulin regimen. Analyze this meal and return ONLY a JSON object — no markdown, no explanation, no preamble.
@@ -749,7 +1013,7 @@ confidence: high=well-known dish with known values, medium=estimated, low=very v
 
 async function analyzeText(description, icr, extraContext, currentGlucose) {
   const txt = await callGemini([{ text: NUTRITION_PROMPT(description, extraContext) }])
-  const p = JSON.parse(txt)
+  const p = sanitizeNutrition(parseModelJSON(txt))
   return {
     nutrition: { ...p, isSplit: p.splitDose, splitReason: p.splitReason },
     dose: calcDose(p.carbs, icr, p.splitDose, currentGlucose)
@@ -787,8 +1051,9 @@ SPLIT DOSE: Set splitDose:true for any meal that is fatty, slow-cooked, creamy, 
     { inline_data: { mime_type: 'image/jpeg', data: compressed } },
     { text: prompt }
   ])
-  const p = JSON.parse(txt)
-  if (p.status === 'needs_clarification') return { needsClarification: { questions: p.questions, partial: p.partialDescription } }
+  const raw = parseModelJSON(txt)
+  if (raw.status === 'needs_clarification') return { needsClarification: sanitizeClarification(raw) }
+  const p = sanitizeNutrition(raw)
   return {
     nutrition: { ...p, isSplit: p.splitDose, splitReason: p.splitReason },
     dose: calcDose(p.carbs, icr, p.splitDose, currentGlucose)
@@ -892,33 +1157,115 @@ function resetLog() {
   render()
 }
 
-// ── SYNC ──────────────────────────────────────────────────────
+// ── BACKUP / EXPORT ───────────────────────────────────────────
+// Photos are omitted from exports (they can be large and live in IndexedDB);
+// runtime-only flags are stripped too.
+function buildExport() {
+  return {
+    meals: state.meals.map(m => {
+      const { imageB64, _imgSaved, _expanded, _editingPre, _editingPost, ...rest } = m
+      return { ...rest, hasImage: false, imageB64: null }
+    }),
+    settings: state.settings,
+    favourites: state.favourites,
+    exportedAt: new Date().toISOString(),
+    totalMeals: state.meals.length
+  }
+}
+
+function backupFilename() {
+  return `carblens-backup-${new Date().toISOString().slice(0,10)}.json`
+}
+
+// Header sync button + Settings button → download a local JSON backup.
 async function syncToDrive() {
   const btn = document.getElementById('syncBtn')
   const ico = document.getElementById('syncIco')
   const lbl = document.getElementById('syncLbl')
-  ico.innerHTML = '<span class="spin">⟳</span>'
-  lbl.textContent = '...'
+  if (ico) ico.innerHTML = '<span class="spin">⟳</span>'
+  if (lbl) lbl.textContent = '...'
   try {
-    const exportData = {
-      meals: state.meals.map(m => ({ ...m, imageB64: m.imageB64 ? '[photo-omitted]' : null })),
-      settings: state.settings,
-      exportedAt: new Date().toISOString(),
-      totalMeals: state.meals.length
-    }
-    const json = JSON.stringify(exportData, null, 2)
+    const json = JSON.stringify(buildExport(), null, 2)
     const blob = new Blob([json], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `carblens-backup-${new Date().toISOString().slice(0,10)}.json`
+    a.download = backupFilename()
     a.click()
     URL.revokeObjectURL(url)
-    ico.textContent = '✓'; lbl.textContent = 'Saved'; btn.className = 'sync-btn ok'
-  } catch(e) {
-    ico.textContent = '!'; lbl.textContent = 'Error'; btn.className = 'sync-btn err'
+    if (ico) ico.textContent = '✓'; if (lbl) lbl.textContent = 'Saved'; if (btn) btn.className = 'sync-btn ok'
+  } catch (e) {
+    console.error('CarbLens: backup download failed', e)
+    if (ico) ico.textContent = '!'; if (lbl) lbl.textContent = 'Error'; if (btn) btn.className = 'sync-btn err'
+    notify('Could not create backup file.', 'err')
   }
-  setTimeout(() => { ico.textContent = '☁'; lbl.textContent = 'Sync'; btn.className = 'sync-btn' }, 3000)
+  setTimeout(() => { if (ico) ico.textContent = '☁'; if (lbl) lbl.textContent = 'Sync'; if (btn) btn.className = 'sync-btn' }, 3000)
+}
+
+// Dynamically load an external script once.
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) return resolve()
+    const s = document.createElement('script')
+    s.src = src
+    s.onload = () => resolve()
+    s.onerror = () => reject(new Error('Failed to load ' + src))
+    document.head.appendChild(s)
+  })
+}
+
+// Upload the JSON backup straight to the user's Google Drive.
+// Uses Google Identity Services for OAuth (scope drive.file = only files this
+// app creates). Requires a Google OAuth Client ID configured in Settings, and
+// the app's origin added to that client's Authorised JavaScript origins.
+async function uploadToDrive() {
+  const clientId = (localStorage.getItem('cl_google_client_id') || '').trim()
+  if (!clientId) { notify('Add a Google OAuth Client ID in Settings to enable Drive upload.', 'err'); return }
+  const btn = document.getElementById('driveBtn')
+  const orig = btn ? btn.textContent : ''
+  if (btn) { btn.disabled = true; btn.textContent = '⟳ Connecting…' }
+  try {
+    await loadScript('https://accounts.google.com/gsi/client')
+    if (!window.google || !google.accounts || !google.accounts.oauth2) {
+      throw new Error('Google sign-in failed to load.')
+    }
+    const token = await new Promise((resolve, reject) => {
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'https://www.googleapis.com/auth/drive.file',
+        callback: (resp) => resp && resp.access_token ? resolve(resp.access_token) : reject(new Error(resp && resp.error ? resp.error : 'Authorisation cancelled'))
+      })
+      client.requestAccessToken()
+    })
+    const json = JSON.stringify(buildExport(), null, 2)
+    const boundary = 'carblens' + Date.now()
+    const metadata = { name: backupFilename(), mimeType: 'application/json' }
+    const body =
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n` +
+      `--${boundary}\r\nContent-Type: application/json\r\n\r\n${json}\r\n--${boundary}--`
+    const r = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'multipart/related; boundary=' + boundary },
+      body
+    })
+    if (!r.ok) { const t = await r.text().catch(() => ''); throw new Error('Drive upload failed (' + r.status + '). ' + t.slice(0, 120)) }
+    notify('Backup uploaded to Google Drive ✓', 'ok')
+  } catch (e) {
+    console.error('CarbLens: Drive upload failed', e)
+    notify('Drive upload failed: ' + (e.message || e), 'err')
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = orig }
+  }
+}
+
+function saveGoogleClientId() {
+  const inp = document.getElementById('googleClientIdInput')
+  if (!inp) return
+  const v = inp.value.trim()
+  if (v) localStorage.setItem('cl_google_client_id', v)
+  else localStorage.removeItem('cl_google_client_id')
+  const btn = document.getElementById('saveGoogleIdBtn')
+  if (btn) { btn.textContent = '✓ Saved'; setTimeout(() => { btn.textContent = 'Save'; render() }, 1500) }
 }
 
 // ── RENDER ────────────────────────────────────────────────────
@@ -943,7 +1290,7 @@ function renderLog() {
 function renderInput() {
   const L = state.log
   const hasInput = L.description.trim() || L.imageB64
-  const correction = L.currentGlucose ? calcCorrectionDose(L.currentGlucose) : 0
+  const correction = L.currentGlucose ? Math.round(calcCorrectionDose(L.currentGlucose)) : 0
   const glucoColor = !L.currentGlucose ? 'var(--muted)'
     : L.currentGlucose < 70 ? 'var(--danger)'
     : L.currentGlucose <= 100 ? 'var(--accent)'
@@ -957,7 +1304,7 @@ function renderInput() {
       <div class="pg-sub">Describe your meal or upload a photo</div>
     </div>
 
-    <!-- GLUCOSE + IOB STRIP -->
+    <!-- CURRENT GLUCOSE STRIP -->
     <div class="log-gluco-strip">
       <div class="lgs-left">
         <div class="lgs-label">Current glucose</div>
@@ -981,7 +1328,7 @@ function renderInput() {
       <div class="fav-scroll">
         ${state.favourites.map(f => `
         <button class="fav-chip" onclick="useFavourite('${f.id}')">
-          <span class="fav-chip-name">${f.name}</span>
+          <span class="fav-chip-name">${escapeHTML(f.name)}</span>
           <span class="fav-chip-carbs">${f.nutrition.carbs}g</span>
         </button>`).join('')}
       </div>
@@ -989,9 +1336,9 @@ function renderInput() {
 
     <div class="gap-4">
       <div class="stt-wrap">
-        <textarea class="field" id="mealDesc" rows="3" placeholder="e.g. grilled chicken breast with basmati rice and steamed broccoli, medium portion...">${L.description}</textarea>
-        <button class="stt-btn" id="sttBtn" onclick="toggleSpeech()" title="Tap to speak your meal">
-          <span id="sttIcon">🎙</span>
+        <textarea class="field" id="mealDesc" rows="3" placeholder="e.g. grilled chicken breast with basmati rice and steamed broccoli, medium portion...">${escapeHTML(L.description)}</textarea>
+        <button class="stt-btn ${_sttListening ? 'listening' : ''}" id="sttBtn" onclick="toggleSpeech()" title="Tap to speak your meal" aria-label="Dictate meal">
+          <span id="sttIcon">${_sttListening ? ICONS.stop : ICONS.mic}</span>
         </button>
       </div>
       <div class="or-div"><span>or</span></div>
@@ -1002,11 +1349,11 @@ function renderInput() {
            </div>`
         : `<div class="photo-btns">
             <div class="photo-btn-wrap">
-              <div class="ph-btn-inner"><span class="ph-btn-ico">🖼</span><span>Gallery</span></div>
+              <div class="ph-btn-inner"><span class="ph-btn-ico">${ICONS.gallery}</span><span>Gallery</span></div>
               <input type="file" accept="image/*" onchange="handleFile(this)" class="ph-file-inp">
             </div>
             <div class="photo-btn-wrap">
-              <div class="ph-btn-inner"><span class="ph-btn-ico">📷</span><span>Camera</span></div>
+              <div class="ph-btn-inner"><span class="ph-btn-ico">${ICONS.camera}</span><span>Camera</span></div>
               <input type="file" accept="image/*" capture="environment" onchange="handleFile(this)" class="ph-file-inp">
             </div>
            </div>`
@@ -1016,6 +1363,22 @@ function renderInput() {
         ${L.loading ? '<span class="dots">Analysing<span>.</span><span>.</span><span>.</span></span>' : 'Analyse Meal →'}
       </button>
     </div>
+
+    ${state.meals.length ? (() => { const lm = state.meals[0]; return `
+    <div class="last-meal">
+      <div class="last-meal-hd">Last meal · for reference</div>
+      <div class="last-meal-card" onclick="openLastMeal('${lm.id}')">
+        ${lm.imageB64 ? `<img class="last-meal-thumb" src="data:${lm.imageMime||'image/jpeg'};base64,${lm.imageB64}" alt="">` : ''}
+        <div class="last-meal-info">
+          <div class="last-meal-name">${escapeHTML(lm.description || lm.nutrition.mealDescription)}</div>
+          <div class="last-meal-time">${new Date(lm.timestamp).toLocaleString('en-GB',{weekday:'short',hour:'2-digit',minute:'2-digit'})}</div>
+        </div>
+        <div class="last-meal-r">
+          <span class="last-meal-carbs">${lm.nutrition.carbs}g</span>
+          <span class="last-meal-dose ${lm.dose.split?'sp':''}">${lm.dose.total}u${lm.dose.split?' ⚡':''}</span>
+        </div>
+      </div>
+    </div>`})() : ''}
   </div>`
 }
 
@@ -1028,16 +1391,16 @@ function renderClarify() {
     <div class="center-phase" style="align-items:flex-start;text-align:left;padding:20px 0">
       <span style="font-size:36px">🔍</span>
       <div class="pg-title">Quick question${c.questions.length > 1 ? 's' : ''}</div>
-      <div class="pg-sub" style="margin-bottom:0">I can see ${c.partial || 'your meal'} — just need a bit more info.</div>
+      <div class="pg-sub" style="margin-bottom:0">I can see ${escapeHTML(c.partial || 'your meal')} — just need a bit more info.</div>
     </div>
     ${L.imageB64 ? `<div class="result-img mt-2" style="max-height:150px"><img src="data:${L.imageMime};base64,${L.imageB64}"></div>` : ''}
     <div class="gap-4 mt-4">
       ${c.questions.map(q => `
       <div class="clarify-q">
-        <label>${q.question}</label>
+        <label>${escapeHTML(q.question)}</label>
         ${q.type === 'text'
-          ? `<input class="field" id="clar_${q.id}" value="${L.clarAnswers[q.id]||''}" placeholder="Type your answer...">`
-          : `<div class="choices">${(q.options||[]).map(o => `<button class="ch-btn ${L.clarAnswers[q.id]===o?'on':''}" onclick="setClarAnswer('${q.id}','${o}')">${o}</button>`).join('')}</div>`
+          ? `<input class="field" id="clar_${q.id}" value="${escapeHTML(L.clarAnswers[q.id]||'')}" placeholder="Type your answer...">`
+          : `<div class="choices">${(q.options||[]).map((o, oi) => `<button class="ch-btn ${L.clarAnswers[q.id]===o?'on':''}" onclick="setClarChoice('${q.id}',${oi})">${escapeHTML(o)}</button>`).join('')}</div>`
         }
       </div>`).join('')}
       ${L.error ? `<div class="err-box">${L.error}</div>` : ''}
@@ -1064,7 +1427,7 @@ function renderResult() {
   <div class="pg gap-4">
     ${hasImage ? `<div class="result-img"><img src="data:${L.imageMime};base64,${L.imageB64}" alt="Your meal"></div>` : ''}
     <div>
-      <div class="result-name">${n.mealDescription}</div>
+      <div class="result-name">${escapeHTML(n.mealDescription)}</div>
       <div class="badges">
         <span class="badge" style="border-color:${confColor};color:${confColor}">
           ${n.confidence === 'high' ? '✓' : '≈'} ${n.confidence} confidence
@@ -1072,6 +1435,13 @@ function renderResult() {
         ${n.glycemicIndex ? `<span class="badge" style="border-color:${giColor};color:${giColor}">GI: ${n.glycemicIndex}</span>` : ''}
       </div>
     </div>
+
+    <!-- DOSE SAFETY WARNINGS -->
+    ${(d.warnings && d.warnings.length) ? `
+    <div class="dose-warn">
+      <div class="dose-warn-hdr">⚠ Check before dosing</div>
+      <ul>${d.warnings.map(w => `<li>${escapeHTML(w)}</li>`).join('')}</ul>
+    </div>` : ''}
 
     <!-- DOSE BREAKDOWN CARD -->
     ${d.split ? `
@@ -1083,7 +1453,7 @@ function renderResult() {
         <div class="split-item"><span class="split-u">${d.later}u</span><span class="split-lb">${d.delay} min later</span></div>
       </div>
       <div class="split-tot">Total bolus: <b>${d.total}u</b></div>
-      ${n.splitReason ? `<div class="split-why">${n.splitReason}</div>` : ''}
+      ${n.splitReason ? `<div class="split-why">${escapeHTML(n.splitReason)}</div>` : ''}
     </div>` : `
     <div class="dose-card std">
       <div class="dose-hdr">Total Bolus Dose</div>
@@ -1111,8 +1481,8 @@ function renderResult() {
     </div>
 
     <div class="nut-grid">
-      ${[['Calories', n.calories, 'kcal', false],['Carbs', n.carbs, 'g', true],['Protein', n.protein, 'g', false],['Fat', n.fat, 'g', false],['Fiber', n.fiber, 'g', false],['Sugar', n.sugar, 'g', false]].map(([lb, val, u, hi]) => `
-      <div class="nut-cell ${hi ? 'hi' : ''}">
+      ${[['Calories', n.calories, 'kcal', 'nm-cal'],['Carbs', n.carbs, 'g', 'nm-carb'],['Protein', n.protein, 'g', 'nm-pro'],['Fat', n.fat, 'g', 'nm-fat'],['Fiber', n.fiber, 'g', 'nm-fib'],['Sugar', n.sugar, 'g', 'nm-sug']].map(([lb, val, u, cls]) => `
+      <div class="nut-cell ${cls}">
         <span class="nut-val">${val}<span class="nut-u">${u}</span></span>
         <span class="nut-lb">${lb}</span>
       </div>`).join('')}
@@ -1143,7 +1513,7 @@ function renderResult() {
     ${n.notes && n.notes.length ? `
     <div class="notes-card">
       <div class="notes-ttl">Clinical notes</div>
-      <ul>${n.notes.map(note => `<li>${note}</li>`).join('')}</ul>
+      <ul>${n.notes.map(note => `<li>${escapeHTML(note)}</li>`).join('')}</ul>
     </div>` : ''}
 
     <!-- REFINE PANEL -->
@@ -1235,6 +1605,13 @@ function toggleHistoryAndSwitch(id) {
   if (meal) { meal._expanded = true; render() }
 }
 
+// Open the referenced meal in History (expanded).
+function openLastMeal(id) {
+  const m = state.meals.find(x => x.id === id)
+  if (m) m._expanded = true
+  nav('history')
+}
+
 function renderHistoryCard(m) {
   const isExp = m._expanded
   const n = m.nutrition
@@ -1252,7 +1629,7 @@ function renderHistoryCard(m) {
       <div class="hcard-l">
         ${m.imageB64 ? `<img class="h-thumb" src="data:${m.imageMime||'image/jpeg'};base64,${m.imageB64}" alt="">` : ''}
         <div class="h-info">
-          <span class="h-name">${m.description || n.mealDescription}</span>
+          <span class="h-name">${escapeHTML(m.description || n.mealDescription)}</span>
           <span class="h-time">${new Date(m.timestamp).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</span>
         </div>
       </div>
@@ -1329,7 +1706,7 @@ function renderHistoryCard(m) {
         })() : ''}
       </div>
 
-      ${n.notes && n.notes.length ? `<div class="h-notes"><ul>${n.notes.map(nt=>`<li>${nt}</li>`).join('')}</ul></div>` : ''}
+      ${n.notes && n.notes.length ? `<div class="h-notes"><ul>${n.notes.map(nt=>`<li>${escapeHTML(nt)}</li>`).join('')}</ul></div>` : ''}
     </div>` : ''}
   </div>`
 }
@@ -1466,7 +1843,7 @@ function renderStats() {
         <span>AI Pattern Analysis</span>
         <button class="narrative-close" onclick="state.narrative.text=null;save();render()">✕</button>
       </div>
-      <div class="narrative-body">${state.narrative.text}</div>
+      <div class="narrative-body">${escapeHTML(state.narrative.text)}</div>
       <div class="narrative-ts">Generated ${new Date(state.narrative.generatedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
     </div>` : ''}
 
@@ -1516,7 +1893,7 @@ function renderStats() {
     <div class="stats-section" style="margin-top:18px">
       <div class="sec-ttl">Nutrition averages</div>
       <div class="stat-grid">
-        <div class="stat-card hi">
+        <div class="stat-card nm-carb">
           <span class="stat-v">${avgCarbs}g</span>
           <span class="stat-l">Avg carbs / meal</span>
           <span class="stat-sub">Implies ~${r1(avgCarbs/setICR)}u insulin</span>
@@ -1526,19 +1903,19 @@ function renderStats() {
           <span class="stat-l">Avg insulin dose</span>
           <span class="stat-sub">Actual bolus given</span>
         </div>
-        <div class="stat-card">
+        <div class="stat-card nm-cal">
           <span class="stat-v">${avgCal}</span>
           <span class="stat-l">Avg calories</span>
         </div>
-        <div class="stat-card">
+        <div class="stat-card nm-pro">
           <span class="stat-v">${avgProt}g</span>
           <span class="stat-l">Avg protein</span>
         </div>
-        <div class="stat-card">
+        <div class="stat-card nm-fat">
           <span class="stat-v">${avgFat}g</span>
           <span class="stat-l">Avg fat</span>
         </div>
-        <div class="stat-card">
+        <div class="stat-card nm-fib">
           <span class="stat-v">${avgFiber}g</span>
           <span class="stat-l">Avg fiber</span>
         </div>
@@ -1550,7 +1927,7 @@ function renderStats() {
               ${spark.map((m,i) => `<circle cx="${i * sparkW + sparkW/2}" cy="${44-(m.nutrition.carbs/sparkMax)*38}" r="2" fill="var(--accent)" vector-effect="non-scaling-stroke"/>`).join('')}
             </svg>
           </div>
-          <div style="display:flex;justify-content:space-between;font-size:9px;font-family:var(--mono);color:var(--dim);margin-top:2px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;font-family:var(--mono);color:var(--dim);margin-top:2px">
             <span>oldest</span><span>most recent</span>
           </div>
         </div>
@@ -1618,7 +1995,7 @@ function renderStats() {
         <div class="stat-card">
           <span class="stat-v">${highCarbMeal.nutrition.carbs}g</span>
           <span class="stat-l">Highest carb meal</span>
-          <span class="stat-sub">${(highCarbMeal.description||highCarbMeal.nutrition.mealDescription||'').substring(0,22)}…</span>
+          <span class="stat-sub">${escapeHTML((highCarbMeal.description||highCarbMeal.nutrition.mealDescription||'').substring(0,22))}…</span>
         </div>
       </div>
       <div class="gap-3">
@@ -1657,16 +2034,29 @@ function renderSettings() {
       <p style="font-size:12px;font-family:var(--mono);color:var(--muted)">Used to calculate correction dose when your glucose is above target.</p>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div>
-          <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">ISF (mg/dL per unit)</div>
+          <div style="font-size:11px;font-family:var(--mono);color:var(--dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">ISF (mg/dL per unit)</div>
           <input class="field" id="isfInput" type="number" min="10" max="200" step="5" value="${state.settings.isf||40}" placeholder="40">
         </div>
         <div>
-          <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Target glucose</div>
+          <div style="font-size:11px;font-family:var(--mono);color:var(--dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Target glucose</div>
           <input class="field" id="targetGluInput" type="number" min="60" max="200" step="5" value="${state.settings.targetGlucose||100}" placeholder="100">
         </div>
       </div>
       <button class="btn-sm" id="saveCorrBtn" style="align-self:flex-start" onclick="saveCorrectionSettings()">Save</button>
       <div style="font-size:11px;font-family:var(--mono);color:var(--dim);line-height:1.5">ISF = how many mg/dL 1 unit of insulin drops your glucose. Typical range: 30–60. Confirm with your care team.</div>
+    </div>
+
+    <div class="set-sec">
+      <div class="set-ttl">Safety Limit</div>
+      <p style="font-size:12px;font-family:var(--mono);color:var(--muted)">Maximum single bolus. Any calculated dose above this is capped and flagged so a bad estimate can't trigger a dangerously large dose.</p>
+      <div style="display:grid;grid-template-columns:1fr;gap:10px">
+        <div>
+          <div style="font-size:11px;font-family:var(--mono);color:var(--dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Max bolus (units)</div>
+          <input class="field" id="maxBolusInput" type="number" min="1" max="100" step="1" value="${state.settings.maxBolus||25}" placeholder="25">
+        </div>
+      </div>
+      <button class="btn-sm" id="saveMaxBolusBtn" style="align-self:flex-start" onclick="saveMaxBolus()">Save</button>
+      <div style="font-size:11px;font-family:var(--mono);color:var(--dim);line-height:1.5">Set this to a value you'd never reasonably exceed for one meal. Confirm with your care team.</div>
     </div>
 
     ${state.favourites.length > 0 ? `
@@ -1675,58 +2065,59 @@ function renderSettings() {
       ${state.favourites.map(f => `
       <div style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 13px">
         <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</div>
+          <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHTML(f.name)}</div>
           <div style="font-size:11px;font-family:var(--mono);color:var(--muted)">${f.nutrition.carbs}g carbs · ${f.nutrition.calories} kcal</div>
         </div>
-        <button onclick="deleteFavourite('${f.id}')" style="background:none;border:none;color:var(--dim);font-size:16px;cursor:pointer;padding:4px">🗑</button>
+        <button class="fav-del-btn" onclick="deleteFavourite('${f.id}')" aria-label="Delete favourite">🗑</button>
       </div>`).join('')}
     </div>` : ''}
 
     <div class="set-sec">
       <div class="set-ttl">Gemini API Key</div>
       <p style="font-size:12px;font-family:var(--mono);color:var(--muted)">Free key from <a class="lnk" href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a> — required for AI analysis.</p>
-      <input class="field" id="geminiKeyInput" type="password" placeholder="AIza..." value="${localStorage.getItem('cl_gemini_key')||''}">
+      <input class="field" id="geminiKeyInput" type="password" placeholder="AIza..." value="${escapeHTML(localStorage.getItem('cl_gemini_key')||'')}">
       <button class="btn-sm" id="saveGeminiBtn" style="align-self:flex-start" onclick="saveGeminiKey()">Save Key</button>
       ${localStorage.getItem('cl_gemini_key')
         ? `<div style="font-size:11px;font-family:var(--mono);color:var(--accent)">✓ API key configured</div>`
         : `<div style="font-size:11px;font-family:var(--mono);color:var(--warn)">⚠ No key set — AI analysis won't work</div>`
       }
+      <div style="font-size:11px;font-family:var(--mono);color:var(--dim);margin-top:8px;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Model</div>
+      <input class="field" id="geminiModelInput" placeholder="${DEFAULT_GEMINI_MODEL}" value="${escapeHTML(localStorage.getItem('cl_gemini_model')||'')}">
+      <button class="btn-sm" id="saveModelBtn" style="align-self:flex-start" onclick="saveGeminiModel()">Save Model</button>
+      <div style="font-size:11px;font-family:var(--mono);color:var(--dim);line-height:1.5">Leave blank to use the default (<b>${DEFAULT_GEMINI_MODEL}</b>). Change this if Google renames or retires the model.</div>
     </div>
 
     <div class="set-sec">
-      <div class="set-ttl">Abbott LibreLink Integration</div>
+      <div class="set-ttl">Glucose readings</div>
       <div class="integ-card">
-        <div class="integ-hdr">
-          <span class="integ-ico">🩺</span>
-          <div><strong>Abbott LibreLink</strong><p>Auto-import glucose from your CGM</p></div>
-        </div>
         <div class="integ-note">
-          LibreLink does not expose a public API for third-party apps. To use your readings:
+          CarbLens uses glucose readings you enter manually. Continuous glucose monitors (e.g. Abbott Libre) don't offer a public API for third-party web apps, so there's no automatic import:
           <ul>
-            <li>Open LibreLink on your phone → scan your sensor</li>
-            <li>Note your current reading</li>
-            <li>Enter it manually when logging a meal in CarbLens</li>
+            <li>Check your current reading in your CGM app or meter</li>
+            <li>Type it into the "Current glucose" field when logging a meal</li>
+            <li>Add post-meal readings later from any meal's history card</li>
           </ul>
-          <a class="lnk" href="https://www.librelinkup.com" target="_blank">LibreLinkUp (family sharing) →</a>
         </div>
       </div>
     </div>
 
     <div class="set-sec">
-      <div class="set-ttl">Google Backup</div>
+      <div class="set-ttl">Backup &amp; Export</div>
       <div class="integ-card">
-        <div class="integ-hdr">
-          <span class="integ-ico">☁️</span>
-          <div><strong>Local Backup</strong><p>Downloads history as a JSON file</p></div>
-          <span class="integ-st on">Ready</span>
-        </div>
-        <div class="integ-note small">Download your meal history as JSON, or export a PDF report for your diabetes consultant.</div>
+        <div class="integ-note small">Download your data as JSON, upload it to your Google Drive, or export a PDF report for your diabetes consultant. (Photos are not included in exports.)</div>
         <div class="row" style="gap:8px;flex-wrap:wrap">
           <button class="btn-ghost" onclick="syncToDrive()" style="flex:1">↓ JSON backup</button>
           <button class="btn-ghost" onclick="exportPDF()" style="flex:1">↓ PDF report</button>
         </div>
+        <button class="btn-ghost" id="driveBtn" onclick="uploadToDrive()" style="width:100%">☁ Upload backup to Google Drive</button>
         <div style="margin-top:4px">
-          <div style="font-size:10px;font-family:var(--mono);color:var(--dim);margin-bottom:6px">Restore from backup</div>
+          <div style="font-size:11px;font-family:var(--mono);color:var(--dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Google OAuth Client ID</div>
+          <input class="field" id="googleClientIdInput" placeholder="xxxxx.apps.googleusercontent.com" value="${escapeHTML(localStorage.getItem('cl_google_client_id')||'')}">
+          <button class="btn-sm" id="saveGoogleIdBtn" style="align-self:flex-start;margin-top:8px" onclick="saveGoogleClientId()">Save</button>
+          <div style="font-size:11px;font-family:var(--mono);color:var(--dim);line-height:1.5;margin-top:6px">Create one in Google Cloud Console (OAuth client, type "Web"), enable the Drive API, and add this app's URL to the client's <b>Authorised JavaScript origins</b>. Drive access is limited to files this app creates.</div>
+        </div>
+        <div style="margin-top:8px">
+          <div style="font-size:11px;font-family:var(--mono);color:var(--dim);margin-bottom:6px">Restore from backup</div>
           <div class="photo-btn-wrap" style="border-style:dashed;border-color:var(--border-b)">
             <div class="ph-btn-inner" style="padding:10px 16px;font-size:12px;gap:6px"><span>📂</span><span>Choose JSON backup file</span></div>
             <input type="file" accept=".json,application/json" onchange="restoreBackup(this)" class="ph-file-inp">
@@ -1838,6 +2229,14 @@ function setClarAnswer(id, val) {
   render()
 }
 
+// Choice answers are referenced by index to avoid injecting AI text into inline handlers.
+function setClarChoice(id, idx) {
+  const q = state.log.clarification && state.log.clarification.questions.find(x => x.id === id)
+  if (!q || !q.options) return
+  state.log.clarAnswers[id] = q.options[idx]
+  render()
+}
+
 function submitClarify() {
   const L = state.log
   const allAnswered = L.clarification.questions.every(q => L.clarAnswers[q.id])
@@ -1937,6 +2336,25 @@ function saveGeminiKey() {
   render()
 }
 
+function saveGeminiModel() {
+  const inp = document.getElementById('geminiModelInput')
+  if (!inp) return
+  const v = inp.value.trim()
+  if (v) localStorage.setItem('cl_gemini_model', v)
+  else localStorage.removeItem('cl_gemini_model')
+  const btn = document.getElementById('saveModelBtn')
+  if (btn) { btn.textContent = '✓ Saved'; setTimeout(() => { btn.textContent = 'Save Model' }, 1500) }
+}
+
+function saveMaxBolus() {
+  const val = parseFloat(document.getElementById('maxBolusInput')?.value)
+  if (isNaN(val) || val < 1) { notify('Enter a max bolus of at least 1 unit.', 'err'); return }
+  state.settings.maxBolus = Math.min(100, val)
+  save()
+  const btn = document.getElementById('saveMaxBolusBtn')
+  if (btn) { btn.textContent = '✓ Saved'; setTimeout(() => { btn.textContent = 'Save' }, 2000) }
+}
+
 
 // ── GLUCOSE INPUT ────────────────────────────────────────────
 function setCurrentGlucose(val) {
@@ -1945,7 +2363,7 @@ function setCurrentGlucose(val) {
   // Re-render just the strip area without full render for responsiveness
   const strip = document.querySelector('.lgs-right')
   if (strip) {
-    const correction = state.log.currentGlucose ? calcCorrectionDose(state.log.currentGlucose) : 0
+    const correction = state.log.currentGlucose ? Math.round(calcCorrectionDose(state.log.currentGlucose)) : 0
     strip.innerHTML = `
       ${correction > 0 ? `<div class="lgs-corr"><span class="lgs-corr-val">+${correction}u</span><span class="lgs-corr-lbl">correction</span></div>` : ''}
       ${state.log.currentGlucose && state.log.currentGlucose < 70 ? `<div class="lgs-alert">⚠ Low — treat first</div>` : ''}
@@ -2050,7 +2468,7 @@ function exportPDF() {
     <tr>
       <td>${new Date(m.timestamp).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</td>
       <td>${new Date(m.timestamp).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</td>
-      <td>${(m.description||m.nutrition.mealDescription||'').substring(0,35)}</td>
+      <td>${escapeHTML((m.description||m.nutrition.mealDescription||'').substring(0,35))}</td>
       <td>${m.nutrition.carbs}g</td>
       <td>${m.nutrition.fat}g</td>
       <td>${m.dose.total}u${m.dose.split?' ⚡':''}</td>
@@ -2113,9 +2531,16 @@ function restoreBackup(input) {
       const d = JSON.parse(e.target.result)
       if (!d.meals || !Array.isArray(d.meals)) throw new Error('Invalid backup file')
       if (!confirm(`Restore ${d.meals.length} meals from backup? This will merge with your existing ${state.meals.length} meals.`)) return
-      // Merge — deduplicate by id
+      // Merge — deduplicate by id. Backups omit photo data, so drop any
+      // placeholder image payload and clear the hasImage flag on restored meals.
       const existing = new Set(state.meals.map(m => m.id))
-      const newMeals = d.meals.filter(m => !existing.has(m.id))
+      const newMeals = d.meals.filter(m => !existing.has(m.id)).map(m => {
+        const cleaned = { ...m, _imgSaved: false }
+        if (typeof cleaned.imageB64 !== 'string' || !cleaned.imageB64.match(/^[A-Za-z0-9+/=]+$/) || cleaned.imageB64.length < 100) {
+          cleaned.imageB64 = null; cleaned.hasImage = false
+        }
+        return cleaned
+      })
       state.meals = [...state.meals, ...newMeals].sort((a,b) => new Date(b.timestamp)-new Date(a.timestamp))
       if (d.settings) state.settings = { ...state.settings, ...d.settings }
       if (d.favourites) state.favourites = [...(state.favourites||[]), ...(d.favourites||[])]
@@ -2168,7 +2593,7 @@ function toggleSpeech() {
   r.onstart = () => {
     _sttListening = true
     if (btn) btn.classList.add('listening')
-    if (icon) icon.textContent = '⏹'
+    if (icon) icon.innerHTML = ICONS.stop
   }
 
   r.onresult = (e) => {
@@ -2192,11 +2617,11 @@ function toggleSpeech() {
 
 function stopSpeech() {
   _sttListening = false
-  if (_sttRecognition) { try { _sttRecognition.stop() } catch(e) {} _sttRecognition = null }
+  if (_sttRecognition) { try { _sttRecognition.stop() } catch(e) { console.warn('speech stop failed', e) } _sttRecognition = null }
   const btn = document.getElementById('sttBtn')
   const icon = document.getElementById('sttIcon')
   if (btn) btn.classList.remove('listening')
-  if (icon) icon.textContent = '🎙'
+  if (icon) icon.innerHTML = ICONS.mic
   // Finalise state from textarea value
   const ta = document.getElementById('mealDesc')
   if (ta) { state.log.description = ta.value; updateAnalyzeBtn() }
@@ -2239,72 +2664,33 @@ function confirmClear() {
   state.meals = []
   state._confirmClear = false
   save()
+  ImageStore.clear().catch(e => console.error('CarbLens: failed to clear image store', e))
   render()
 }
 
 // ── INIT ──────────────────────────────────────────────────────
 document.getElementById('icrDisplay').textContent = state.settings.icr
 render()
+// Migrate any legacy inline images (older localStorage format) into IndexedDB,
+// then strip them from localStorage on the next save.
+if (state.meals.some(m => m.imageB64 && !m._imgSaved)) save()
+// Load image payloads from IndexedDB and re-render once available.
+hydrateImages()
 
 // ── SERVICE WORKER REGISTRATION ───────────────────────────────
+// Registers the external sw.js (same origin) for offline app-shell caching.
+// Requires https or localhost; fails gracefully on file:// .
 if ('serviceWorker' in navigator) {
-  const SW_CODE = `
-const CACHE = 'carblens-v1';
-const FONTS = [
-  'https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap'
-];
-self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(FONTS).catch(()=>{}))
-  );
-  self.skipWaiting();
-});
-self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys =>
-    Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-  ));
-  self.clients.claim();
-});
-self.addEventListener('fetch', e => {
-  const url = e.request.url;
-  // Cache font requests; pass everything else (especially API calls) through
-  if (url.includes('fonts.googleapis.com') || url.includes('fonts.gstatic.com')) {
-    e.respondWith(
-      caches.match(e.request).then(r => r || fetch(e.request).then(res => {
-        const clone = res.clone();
-        caches.open(CACHE).then(c => c.put(e.request, clone));
-        return res;
-      }))
-    );
-    return;
-  }
-  // For the app shell itself (html file), serve from cache first with network fallback
-  if (url.includes(self.location.origin) && (url.endsWith('.html') || url === self.location.origin + '/')) {
-    e.respondWith(
-      caches.match(e.request).then(r => r || fetch(e.request).then(res => {
-        caches.open(CACHE).then(c => c.put(e.request, res.clone()));
-        return res;
-      }).catch(() => caches.match(e.request)))
-    );
-    return;
-  }
-  // Everything else: network only (API calls must not be cached)
-  e.respondWith(fetch(e.request));
-});
-`;
-  const swBlob = new Blob([SW_CODE], {type: 'application/javascript'});
-  const swURL = URL.createObjectURL(swBlob);
-  navigator.serviceWorker.register(swURL, {scope: './'})
-    .then(reg => {
-      console.log('CarbLens SW registered');
-      // Show install prompt
-      window.addEventListener('beforeinstallprompt', e => {
-        e.preventDefault();
-        window._installPrompt = e;
-        showInstallBanner();
-      });
-    })
-    .catch(err => console.log('SW reg failed (ok in file:// context):', err));
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    window._installPrompt = e;
+    showInstallBanner();
+  });
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js', { scope: './' })
+      .then(() => console.log('CarbLens SW registered'))
+      .catch(err => console.log('SW registration failed (expected on file://):', err));
+  });
 }
 
 function showInstallBanner() {
