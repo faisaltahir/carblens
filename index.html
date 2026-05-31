@@ -1214,6 +1214,31 @@ function loadScript(src) {
   })
 }
 
+// Find (or create) a dedicated "CarbLens Backups" folder and return its id.
+// With the drive.file scope we only ever see folders/files this app created,
+// so this reliably reuses the same folder across uploads. Returns null on
+// failure, in which case the upload falls back to My Drive root.
+const DRIVE_FOLDER = 'CarbLens Backups'
+async function ensureDriveFolder(token) {
+  try {
+    const q = encodeURIComponent(`name='${DRIVE_FOLDER}' and mimeType='application/vnd.google-apps.folder' and trashed=false`)
+    const sr = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id,name)`, {
+      headers: { Authorization: 'Bearer ' + token }
+    })
+    if (sr.ok) {
+      const sd = await sr.json()
+      if (sd.files && sd.files.length) return sd.files[0].id
+    }
+    const cr = await fetch('https://www.googleapis.com/drive/v3/files', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: DRIVE_FOLDER, mimeType: 'application/vnd.google-apps.folder' })
+    })
+    if (cr.ok) { const cd = await cr.json(); return cd.id }
+  } catch (e) { console.error('CarbLens: Drive folder setup failed', e) }
+  return null
+}
+
 // Upload the JSON backup straight to the user's Google Drive.
 // Uses Google Identity Services for OAuth (scope drive.file = only files this
 // app creates). Requires a Google OAuth Client ID configured in Settings, and
@@ -1238,8 +1263,9 @@ async function uploadToDrive() {
       client.requestAccessToken()
     })
     const json = JSON.stringify(buildExport(), null, 2)
+    const folderId = await ensureDriveFolder(token)
     const boundary = 'carblens' + Date.now()
-    const metadata = { name: backupFilename(), mimeType: 'application/json' }
+    const metadata = { name: backupFilename(), mimeType: 'application/json', parents: folderId ? [folderId] : undefined }
     const body =
       `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n` +
       `--${boundary}\r\nContent-Type: application/json\r\n\r\n${json}\r\n--${boundary}--`
@@ -1249,7 +1275,7 @@ async function uploadToDrive() {
       body
     })
     if (!r.ok) { const t = await r.text().catch(() => ''); throw new Error('Drive upload failed (' + r.status + '). ' + t.slice(0, 120)) }
-    notify('Backup uploaded to Google Drive ✓', 'ok')
+    notify(folderId ? 'Backup uploaded to Drive → CarbLens Backups ✓' : 'Backup uploaded to Google Drive ✓', 'ok')
   } catch (e) {
     console.error('CarbLens: Drive upload failed', e)
     notify('Drive upload failed: ' + (e.message || e), 'err')
