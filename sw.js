@@ -1,62 +1,41 @@
-// CarbLens service worker — offline app-shell caching.
-// Bump CACHE when you ship a new index.html to force clients to update.
-const CACHE = 'carblens-v2';
-
-// App shell + fonts. The shell is what makes the app load offline.
-const SHELL = [
-  './',
-  './index.html',
-  'https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap'
-];
+// CarbLens service worker — app-shell caching + one-tap update support.
+// BUMP CACHE_VERSION whenever index.html changes so clients detect the update.
+const CACHE_VERSION = 'carblens-v2026-07-18-1800'
+const APP_SHELL = ['./', './index.html']
 
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE)
-      .then(c => Promise.allSettled(SHELL.map(u => c.add(u))))
-      .then(() => self.skipWaiting())
-  );
-});
+    caches.open(CACHE_VERSION).then(c => c.addAll(APP_SHELL)).catch(() => {})
+  )
+})
 
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
-      .then(() => self.clients.claim())
-  );
-});
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE_VERSION).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
+  )
+})
+
+// Page sends 'SKIP_WAITING' when the user taps "Update now"
+self.addEventListener('message', e => {
+  if (e.data === 'SKIP_WAITING') self.skipWaiting()
+})
 
 self.addEventListener('fetch', e => {
-  const req = e.request;
-  if (req.method !== 'GET') return; // never touch POSTs (Gemini/Drive API calls)
-
-  let url;
-  try { url = new URL(req.url); } catch (_) { return; }
-
-  // Never cache API / auth traffic — must always hit the network.
-  const apiHosts = ['generativelanguage.googleapis.com', 'googleapis.com', 'accounts.google.com', 'gstatic.com'];
-  if (apiHosts.some(h => url.hostname.endsWith(h) || url.hostname === h)) {
-    return; // default browser handling
-  }
-
-  // Navigations / app shell → cache-first, falling back to network, then cache.
-  const isShell =
-    req.mode === 'navigate' ||
-    url.origin === self.location.origin ||
-    url.hostname.includes('fonts.googleapis.com') ||
-    url.hostname.includes('fonts.gstatic.com');
-
-  if (isShell) {
-    e.respondWith(
-      caches.match(req).then(cached => {
-        const network = fetch(req).then(res => {
-          if (res && res.ok && (url.origin === self.location.origin || url.hostname.includes('fonts.'))) {
-            const copy = res.clone();
-            caches.open(CACHE).then(c => c.put(req, copy));
-          }
-          return res;
-        }).catch(() => cached || caches.match('./index.html'));
-        return cached || network;
-      })
-    );
-  }
-});
+  const url = new URL(e.request.url)
+  // Never cache API calls — Gemini, Google auth, Drive
+  if (url.hostname.includes('googleapis.com') || url.hostname.includes('accounts.google.com')) return
+  if (e.request.method !== 'GET') return
+  // Network-first for the app shell so new uploads are picked up promptly;
+  // fall back to cache when offline.
+  e.respondWith(
+    fetch(e.request).then(resp => {
+      if (resp.ok && (url.pathname.endsWith('/') || url.pathname.endsWith('index.html'))) {
+        const copy = resp.clone()
+        caches.open(CACHE_VERSION).then(c => c.put(e.request, copy)).catch(() => {})
+      }
+      return resp
+    }).catch(() => caches.match(e.request))
+  )
+})
