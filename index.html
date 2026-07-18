@@ -935,6 +935,9 @@ const MAX_CARBS_PER_MEAL = 300
 // Glucose thresholds (mg/dL)
 const HYPO_THRESHOLD = 70   // below this = treat the low first
 const LOW_NORMAL = 90       // below this but above hypo = dose reduced
+// Post-meal nudge timing (minutes)
+const NUDGE_AFTER_MIN = 120   // ask for post-meal reading 2h after logging
+const NUDGE_EXPIRE_MIN = 360  // stop asking after 6h
 
 function calcCorrectionDose(currentGlucose) {
   // Positive = extra insulin (high glucose). Negative = reduction (below target).
@@ -2518,7 +2521,7 @@ function renderSettings() {
       <div class="about-card">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
           <span><b>CarbLens</b> — Insulin Intelligence</span>
-          <span style="font-size:10px;background:var(--accent-d);color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:2px 8px;white-space:nowrap;margin-left:8px">v2026-07-18 11:23 UTC</span>
+          <span style="font-size:10px;background:var(--accent-d);color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:2px 8px;white-space:nowrap;margin-left:8px">v2026-07-18 13:05 UTC</span>
         </div>
         <span>AI-powered meal analysis with ICR-based insulin dosing. Designed for Type 1 diabetes management.</span>
         <div style="display:flex;align-items:center;gap:6px;padding-top:4px;border-top:1px solid var(--border);margin-top:4px">
@@ -3217,9 +3220,6 @@ function findSimilarMeal(description, excludeId) {
 }
 
 // ── REMINDERS: SPLIT-DOSE TIMER + POST-MEAL NUDGE ────────────
-const NUDGE_AFTER_MIN = 120   // ask for post-meal reading 2h after logging
-const NUDGE_EXPIRE_MIN = 360  // stop asking after 6h
-
 function activeSplit() {
   // Most recent split meal whose second dose is not yet taken, within 4h
   const cutoff = Date.now() - 4 * 60 * 60 * 1000
