@@ -1453,20 +1453,36 @@ async function uploadToDrive() {
       })
       client.requestAccessToken()
     })
-    const json = JSON.stringify(buildExport(), null, 2)
+    if (btn) btn.textContent = '⟳ Packing photos…'
+    const data = await buildFullExport()   // full backup — photos included
+    const photoCount = data.meals.filter(m => m.imageB64).length
+    const json = JSON.stringify(data)      // compact JSON: no pretty-print on a photo-laden file
+    const blob = new Blob([json], { type: 'application/json' })
+    const sizeMB = (blob.size / 1048576).toFixed(1)
+    if (btn) btn.textContent = `⟳ Uploading ${sizeMB} MB…`
     const folderId = await ensureDriveFolder(token)
-    const boundary = 'carblens' + Date.now()
-    const metadata = { name: backupFilename(), mimeType: 'application/json', parents: folderId ? [folderId] : undefined }
-    const body =
-      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n` +
-      `--${boundary}\r\nContent-Type: application/json\r\n\r\n${json}\r\n--${boundary}--`
-    const r = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+    const metadata = { name: backupFilename().replace('.json', '-full.json'), mimeType: 'application/json', parents: folderId ? [folderId] : undefined }
+    // Resumable upload — multipart caps at 5MB, which a photo backup exceeds
+    const init = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
       method: 'POST',
-      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'multipart/related; boundary=' + boundary },
-      body
+      headers: {
+        Authorization: 'Bearer ' + token,
+        'Content-Type': 'application/json; charset=UTF-8',
+        'X-Upload-Content-Type': 'application/json',
+        'X-Upload-Content-Length': String(blob.size)
+      },
+      body: JSON.stringify(metadata)
     })
-    if (!r.ok) { const t = await r.text().catch(() => ''); throw new Error('Drive upload failed (' + r.status + '). ' + t.slice(0, 120)) }
-    notify(folderId ? 'Backup uploaded to Drive → CarbLens Backups ✓' : 'Backup uploaded to Google Drive ✓', 'ok')
+    if (!init.ok) { const t = await init.text().catch(() => ''); throw new Error('Drive upload init failed (' + init.status + '). ' + t.slice(0, 120)) }
+    const uploadUrl = init.headers.get('Location')
+    if (!uploadUrl) throw new Error('Drive did not return an upload URL.')
+    const put = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: blob
+    })
+    if (!put.ok) { const t = await put.text().catch(() => ''); throw new Error('Drive upload failed (' + put.status + '). ' + t.slice(0, 120)) }
+    notify(`Backup uploaded to Drive${folderId ? ' → CarbLens Backups' : ''} ✓ (${photoCount} photos, ${sizeMB} MB)`, 'ok')
   } catch (e) {
     console.error('CarbLens: Drive upload failed', e)
     notify('Drive upload failed: ' + (e.message || e), 'err')
@@ -2497,7 +2513,7 @@ function renderSettings() {
     <div class="set-sec">
       <div class="set-ttl">Backup &amp; Export</div>
       <div class="integ-card">
-        <div class="integ-note small">The JSON backup includes your full history plus configuration — Gemini API key, Google Client ID, model choice, and theme — so restoring on a new device is one step. Keep the file private (it contains your keys). The standard backup skips photos to stay small; <b>Full backup</b> embeds every photo too (larger file, ~100–300KB per photo) and restore puts them back automatically. The PDF report is a formatted summary for your consultant.</div>
+        <div class="integ-note small">The JSON backup includes your full history plus configuration — Gemini API key, Google Client ID, model choice, and theme — so restoring on a new device is one step. Keep the file private (it contains your keys). The standard download skips photos to stay small; <b>Full backup</b> and <b>Upload to Google Drive</b> include every photo (larger file), and restore puts them back automatically. The PDF report is a formatted summary for your consultant.</div>
         <div class="row" style="gap:8px;flex-wrap:wrap">
           <button class="btn-ghost" onclick="syncToDrive()" style="flex:1">↓ JSON backup</button>
           <button class="btn-ghost" onclick="exportPDF()" style="flex:1">↓ PDF report</button>
@@ -2561,7 +2577,7 @@ function renderSettings() {
       <div class="about-card">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
           <span><b>CarbLens</b> — Insulin Intelligence</span>
-          <span style="font-size:10px;background:var(--accent-d);color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:2px 8px;white-space:nowrap;margin-left:8px">v2026-07-18 17:40 UTC</span>
+          <span style="font-size:10px;background:var(--accent-d);color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:2px 8px;white-space:nowrap;margin-left:8px">v2026-07-18 17:46 UTC</span>
         </div>
         <span>AI-powered meal analysis with ICR-based insulin dosing. Designed for Type 1 diabetes management.</span>
         <div style="display:flex;align-items:center;gap:6px;padding-top:4px;border-top:1px solid var(--border);margin-top:4px">
