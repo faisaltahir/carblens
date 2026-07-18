@@ -610,6 +610,30 @@ textarea.field{resize:none;line-height:1.5}
 .prev-when{color:var(--muted);text-transform:none;letter-spacing:0}
 .prev-meal-row{display:flex;gap:7px;flex-wrap:wrap;font-size:13px;font-family:var(--mono);color:var(--text);font-weight:500}
 
+/* ── HISTORY SEARCH ── */
+.hist-search-wrap{position:relative;margin-bottom:12px}
+.hist-search{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--mono);font-size:13px;padding:11px 14px;outline:none;-webkit-appearance:none}
+.hist-search:focus{border-color:var(--accent)}
+.hist-search::placeholder{color:var(--dim)}
+.hist-search-n{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:10px;font-family:var(--mono);color:var(--accent)}
+.hist-none{text-align:center;padding:30px 20px;color:var(--muted);font-family:var(--mono);font-size:12px}
+
+/* ── PORTION CHIPS ── */
+.portion-row{display:flex;align-items:center;gap:7px;margin-top:8px}
+.portion-lbl{font-size:11px;font-family:var(--mono);color:var(--dim)}
+.portion-chip{background:var(--surface);border:1.5px solid var(--border-b);color:var(--muted);border-radius:100px;font-family:var(--mono);font-size:12px;padding:6px 14px;cursor:pointer;min-height:34px}
+.portion-chip.on{background:var(--accent-d);border-color:var(--accent);color:var(--accent);font-weight:600}
+
+/* ── MEAL EDIT/DELETE ── */
+.h-actions{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.h-act-btn{flex:1;background:var(--surface2);border:1px solid var(--border-b);color:var(--muted);border-radius:8px;font-family:var(--mono);font-size:11px;padding:9px;cursor:pointer;min-height:38px}
+.h-act-del{color:var(--danger);border-color:var(--danger-d)}
+.h-edit-form{display:flex;flex-direction:column;gap:10px;margin-top:10px;padding-top:12px;border-top:1px solid var(--border)}
+.h-edit-fld label{display:block;font-size:10px;font-family:var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
+.h-edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.h-edit-note{font-size:10px;font-family:var(--mono);color:var(--dim);line-height:1.5}
+.h-edit-btns{display:flex;gap:8px}
+
 /* ── REMINDER BANNERS ── */
 .rem-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--split-d);border:1.5px solid var(--split);border-radius:var(--r);padding:11px 13px;margin-bottom:4px;animation:fadein .3s ease}
 .rem-banner.rem-due{background:var(--warn-d);border-color:var(--warn)}
@@ -971,6 +995,14 @@ function calcDose(carbs, icr, isSplit, currentGlucose) {
   }
 
   const warnings = []
+  // Meal stacking: a correction on top of a recent dose risks double-counting
+  if (correctionDose > 0 && state.meals.length) {
+    const lastMeal = state.meals[0]
+    const minsAgo = Math.round((Date.now() - new Date(lastMeal.timestamp).getTime()) / 60000)
+    if (minsAgo >= 0 && minsAgo < 120 && (lastMeal.dose?.total || 0) > 0) {
+      warnings.push(`You dosed ${lastMeal.dose.total}u ${minsAgo} min ago — that insulin is still active, so the ${correctionDose}u correction may double-count it. Consider reducing or skipping the correction.`)
+    }
+  }
   if (rawCarbs > MAX_CARBS_PER_MEAL) {
     warnings.push(`Carb estimate (${Math.round(rawCarbs)}g) is unusually high for one meal and was capped at ${MAX_CARBS_PER_MEAL}g. Double-check the meal before dosing.`)
   }
@@ -1239,6 +1271,8 @@ async function doAnalyze(clarifications) {
       L.phase = 'clarifying'
     } else {
       L.nutrition = result.nutrition
+      L.origNutrition = JSON.parse(JSON.stringify(result.nutrition))
+      L.portionScale = 1
       L.dose = result.dose
       // currentGlucose entered on log page — use directly as preGlucose, skip the extra screen
       const id = crypto.randomUUID()
@@ -1441,48 +1475,9 @@ async function uploadToDrive() {
   const orig = btn ? btn.textContent : ''
   if (btn) { btn.disabled = true; btn.textContent = '⟳ Connecting…' }
   try {
-    await loadScript('https://accounts.google.com/gsi/client')
-    if (!window.google || !google.accounts || !google.accounts.oauth2) {
-      throw new Error('Google sign-in failed to load.')
-    }
-    const token = await new Promise((resolve, reject) => {
-      const client = google.accounts.oauth2.initTokenClient({
-        client_id: clientId,
-        scope: 'https://www.googleapis.com/auth/drive.file',
-        callback: (resp) => resp && resp.access_token ? resolve(resp.access_token) : reject(new Error(resp && resp.error ? resp.error : 'Authorisation cancelled'))
-      })
-      client.requestAccessToken()
-    })
-    if (btn) btn.textContent = '⟳ Packing photos…'
-    const data = await buildFullExport()   // full backup — photos included
-    const photoCount = data.meals.filter(m => m.imageB64).length
-    const json = JSON.stringify(data)      // compact JSON: no pretty-print on a photo-laden file
-    const blob = new Blob([json], { type: 'application/json' })
-    const sizeMB = (blob.size / 1048576).toFixed(1)
-    if (btn) btn.textContent = `⟳ Uploading ${sizeMB} MB…`
-    const folderId = await ensureDriveFolder(token)
-    const metadata = { name: backupFilename().replace('.json', '-full.json'), mimeType: 'application/json', parents: folderId ? [folderId] : undefined }
-    // Resumable upload — multipart caps at 5MB, which a photo backup exceeds
-    const init = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
-      method: 'POST',
-      headers: {
-        Authorization: 'Bearer ' + token,
-        'Content-Type': 'application/json; charset=UTF-8',
-        'X-Upload-Content-Type': 'application/json',
-        'X-Upload-Content-Length': String(blob.size)
-      },
-      body: JSON.stringify(metadata)
-    })
-    if (!init.ok) { const t = await init.text().catch(() => ''); throw new Error('Drive upload init failed (' + init.status + '). ' + t.slice(0, 120)) }
-    const uploadUrl = init.headers.get('Location')
-    if (!uploadUrl) throw new Error('Drive did not return an upload URL.')
-    const put = await fetch(uploadUrl, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: blob
-    })
-    if (!put.ok) { const t = await put.text().catch(() => ''); throw new Error('Drive upload failed (' + put.status + '). ' + t.slice(0, 120)) }
-    notify(`Backup uploaded to Drive${folderId ? ' → CarbLens Backups' : ''} ✓ (${photoCount} photos, ${sizeMB} MB)`, 'ok')
+    const token = await getDriveToken(false)
+    if (btn) btn.textContent = '⟳ Uploading…'
+    await driveUploadFull(token, false)
   } catch (e) {
     console.error('CarbLens: Drive upload failed', e)
     notify('Drive upload failed: ' + (e.message || e), 'err')
@@ -1694,6 +1689,11 @@ function renderResult() {
     ${hasImage ? `<div class="result-img"><img src="data:${L.imageMime};base64,${L.imageB64}" alt="Your meal"></div>` : ''}
     <div>
       <div class="result-name">${escapeHTML(n.mealDescription)}</div>
+      <div class="portion-row">
+        <span class="portion-lbl">Ate:</span>
+        ${[[0.5,'½'],[0.75,'¾'],[1,'All']].map(([f,lbl]) => `
+        <button class="portion-chip ${(L.portionScale||1)===f?'on':''}" onclick="scalePortion(${f})">${lbl}</button>`).join('')}
+      </div>
       <div class="badges">
         <span class="badge" style="border-color:${confColor};color:${confColor}">
           ${n.confidence === 'high' ? '✓' : '≈'} ${n.confidence} confidence
@@ -1862,10 +1862,15 @@ function renderHistory() {
   if (!state.meals.length) return `<div class="pg"><div class="empty"><span class="empty-ico">◷</span><h2>No meals logged yet</h2><p>Your meal history will appear here</p></div></div>`
 
   const isGrid = state.historyView === 'grid'
+  // Search filter (applies before pagination)
+  const q = (state.historySearch || '').toLowerCase().trim()
+  const searched = q
+    ? state.meals.filter(m => ((m.description || '') + ' ' + (m.nutrition?.mealDescription || '')).toLowerCase().includes(q))
+    : state.meals
   // Pagination: only render the most recent N meals to keep the DOM light
   if (!state.historyLimit) state.historyLimit = 30
-  const visibleMeals = state.meals.slice(0, state.historyLimit)
-  const hasMore = state.meals.length > state.historyLimit
+  const visibleMeals = searched.slice(0, state.historyLimit)
+  const hasMore = searched.length > state.historyLimit
   const grouped = {}
   visibleMeals.forEach(m => {
     const d = new Date(m.timestamp).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -1908,6 +1913,11 @@ function renderHistory() {
       <div class="pg-title" style="margin-bottom:0">Meal History</div>
       <button class="view-toggle" onclick="state.historyView='grid';render()">⊞ Photos</button>
     </div>
+    <div class="hist-search-wrap">
+      <input class="hist-search" id="histSearch" type="search" placeholder="Search meals…" value="${escapeHTML(state.historySearch || '')}">
+      ${q ? `<span class="hist-search-n">${searched.length} match${searched.length === 1 ? '' : 'es'}</span>` : ''}
+    </div>
+    ${q && !searched.length ? `<div class="hist-none">No meals matching "${escapeHTML(state.historySearch)}"</div>` : ''}
     ${Object.entries(grouped).map(([date, meals]) => `
     <div class="day-grp">
       <div class="day-lbl">${date}</div>
@@ -1915,7 +1925,7 @@ function renderHistory() {
     </div>`).join('')}
     ${hasMore ? `
     <button class="btn-sec" style="width:100%;margin-top:4px" onclick="state.historyLimit += 30; render()">
-      Load more (${state.meals.length - state.historyLimit} older meals)
+      Load more (${searched.length - state.historyLimit} older meals)
     </button>` : ''}
   </div>`
 }
@@ -2041,6 +2051,27 @@ function renderHistoryCard(m) {
       </div>
 
       ${n.notes && n.notes.length ? `<div class="h-notes"><ul>${n.notes.map(nt=>`<li>${escapeHTML(nt)}</li>`).join('')}</ul></div>` : ''}
+
+      ${m._editing ? `
+      <div class="h-edit-form" onclick="event.stopPropagation()">
+        <div class="h-edit-fld">
+          <label>Description</label>
+          <input class="field" id="editDesc_${sid}" value="${escapeHTML(m.description || '')}">
+        </div>
+        <div class="h-edit-grid">
+          <div class="h-edit-fld"><label>Carbs (g)</label><input class="field" id="editCarbs_${sid}" type="number" min="0" max="300" value="${n.carbs}"></div>
+          <div class="h-edit-fld"><label>Dose taken (u)</label><input class="field" id="editDose_${sid}" type="number" min="0" max="50" step="0.5" value="${m.dose.total}"></div>
+        </div>
+        <div class="h-edit-note">Edit to correct AI estimates or record what you actually took. Stats recalculate automatically.</div>
+        <div class="h-edit-btns">
+          <button class="btn-sm" onclick="event.stopPropagation();saveMealEdit('${m.id}','${sid}')">Save changes</button>
+          <button class="btn-ghost" onclick="event.stopPropagation();cancelMealEdit('${m.id}')">Cancel</button>
+        </div>
+      </div>` : `
+      <div class="h-actions" onclick="event.stopPropagation()">
+        <button class="h-act-btn" onclick="startMealEdit('${m.id}')">✎ Edit</button>
+        <button class="h-act-btn h-act-del" onclick="deleteMeal('${m.id}')">🗑 Delete</button>
+      </div>`}
     </div>` : ''}
   </div>`
 }
@@ -2577,7 +2608,7 @@ function renderSettings() {
       <div class="about-card">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
           <span><b>CarbLens</b> — Insulin Intelligence</span>
-          <span style="font-size:10px;background:var(--accent-d);color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:2px 8px;white-space:nowrap;margin-left:8px">v2026-07-18 17:46 UTC</span>
+          <span style="font-size:10px;background:var(--accent-d);color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:2px 8px;white-space:nowrap;margin-left:8px">v2026-07-18 18:02 UTC</span>
         </div>
         <span>AI-powered meal analysis with ICR-based insulin dosing. Designed for Type 1 diabetes management.</span>
         <div style="display:flex;align-items:center;gap:6px;padding-top:4px;border-top:1px solid var(--border);margin-top:4px">
@@ -2596,6 +2627,7 @@ function attachEvents() {
   const refineInp = document.getElementById('refineInput')
   if (refineInp) refineInp.addEventListener('input', e => { state.log.refineContext = e.target.value })
 
+  bindHistorySearch()
   const clarFields = document.querySelectorAll('[id^="clar_"]')
   clarFields.forEach(f => {
     f.addEventListener('input', e => {
@@ -2604,6 +2636,20 @@ function attachEvents() {
       // Update the Continue button WITHOUT re-rendering (keeps keyboard/focus)
       updateClarifyBtn()
     })
+  })
+}
+
+function bindHistorySearch() {
+  const inp = document.getElementById('histSearch')
+  if (!inp) return
+  inp.addEventListener('input', e => {
+    state.historySearch = e.target.value
+    state.historyLimit = 30
+    // Targeted re-render: rebuild main but restore focus + caret to the search box
+    const pos = e.target.selectionStart
+    render()
+    const again = document.getElementById('histSearch')
+    if (again) { again.focus(); try { again.setSelectionRange(pos, pos) } catch(err) {} }
   })
 }
 
@@ -3157,7 +3203,39 @@ if ('serviceWorker' in navigator) {
   });
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js', { scope: './' })
-      .then(() => console.log('CarbLens SW registered'))
+      .then(reg => {
+        console.log('CarbLens SW registered')
+        // Update flow: when a new SW is installed and waiting, offer a one-tap reload
+        function offerUpdate(worker) {
+          if (!worker) return
+          const bar = document.createElement('div')
+          bar.id = 'updateBar'
+          bar.style.cssText = 'position:fixed;bottom:78px;left:50%;transform:translateX(-50%);width:calc(100% - 36px);max-width:444px;background:var(--surface);border:1.5px solid var(--accent);border-radius:14px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;z-index:400;font-family:var(--mono);font-size:12px;color:var(--text)'
+          bar.innerHTML = '<span>⬆ New version available</span>'
+          const b = document.createElement('button')
+          b.textContent = 'Update now'
+          b.style.cssText = 'background:var(--accent-d);border:1px solid var(--accent);color:var(--accent);border-radius:8px;font-family:inherit;font-size:12px;padding:8px 14px;cursor:pointer'
+          b.onclick = () => { worker.postMessage('SKIP_WAITING'); b.textContent = '…' }
+          bar.appendChild(b)
+          document.body.appendChild(bar)
+        }
+        if (reg.waiting && navigator.serviceWorker.controller) offerUpdate(reg.waiting)
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing
+          if (!nw) return
+          nw.addEventListener('statechange', () => {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) offerUpdate(nw)
+          })
+        })
+        let reloaded = false
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (reloaded) return
+          reloaded = true
+          location.reload()
+        })
+        // Check for a new sw.js on every app open
+        reg.update().catch(()=>{})
+      })
       .catch(err => console.log('SW registration failed (expected on file://):', err));
   });
 }
@@ -3281,6 +3359,161 @@ function findSimilarMeal(description, excludeId) {
     if (score > bestScore) { bestScore = score; best = m }
   }
   return bestScore >= 0.4 ? best : null
+}
+
+
+
+
+
+// ── WEEKLY AUTO-BACKUP TO DRIVE ──────────────────────────────
+const AUTO_BACKUP_DAYS = 7
+
+async function getDriveToken(silent) {
+  const clientId = (localStorage.getItem('cl_google_client_id') || '').trim()
+  if (!clientId) throw new Error('no-client-id')
+  await loadScript('https://accounts.google.com/gsi/client')
+  if (!window.google || !google.accounts || !google.accounts.oauth2) throw new Error('Google sign-in failed to load.')
+  return new Promise((resolve, reject) => {
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: 'https://www.googleapis.com/auth/drive.file',
+      callback: (resp) => resp && resp.access_token ? resolve(resp.access_token) : reject(new Error(resp && resp.error ? resp.error : 'Authorisation cancelled'))
+    })
+    client.requestAccessToken(silent ? { prompt: '' } : {})
+  })
+}
+
+async function driveUploadFull(token, quiet) {
+  const data = await buildFullExport()
+  const photoCount = data.meals.filter(m => m.imageB64).length
+  const json = JSON.stringify(data)
+  const blob = new Blob([json], { type: 'application/json' })
+  const sizeMB = (blob.size / 1048576).toFixed(1)
+  const folderId = await ensureDriveFolder(token)
+  const metadata = { name: backupFilename().replace('.json', '-full.json'), mimeType: 'application/json', parents: folderId ? [folderId] : undefined }
+  const init = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json; charset=UTF-8', 'X-Upload-Content-Type': 'application/json', 'X-Upload-Content-Length': String(blob.size) },
+    body: JSON.stringify(metadata)
+  })
+  if (!init.ok) throw new Error('Drive upload init failed (' + init.status + ')')
+  const uploadUrl = init.headers.get('Location')
+  if (!uploadUrl) throw new Error('Drive did not return an upload URL.')
+  const put = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: blob })
+  if (!put.ok) throw new Error('Drive upload failed (' + put.status + ')')
+  localStorage.setItem('cl_last_auto_backup', new Date().toISOString())
+  if (!quiet) notify(`Backup uploaded to Drive ✓ (${photoCount} photos, ${sizeMB} MB)`, 'ok')
+  return { photoCount, sizeMB }
+}
+
+async function maybeAutoBackup() {
+  try {
+    const clientId = (localStorage.getItem('cl_google_client_id') || '').trim()
+    if (!clientId || !state.meals.length) return
+    const last = localStorage.getItem('cl_last_auto_backup')
+    const daysSince = last ? (Date.now() - new Date(last).getTime()) / 86400000 : Infinity
+    if (daysSince < AUTO_BACKUP_DAYS) return
+    // Try a silent token first (works if previously authorised this origin)
+    let token
+    try { token = await getDriveToken(true) }
+    catch(e) {
+      notify('Weekly backup due — tap ☁ Upload to Google Drive in Settings.', '')
+      return
+    }
+    const r = await driveUploadFull(token, true)
+    notify(`Weekly auto-backup done ✓ (${r.photoCount} photos, ${r.sizeMB} MB)`, 'ok')
+  } catch(e) {
+    console.warn('auto-backup skipped:', e.message)
+  }
+}
+// Run shortly after startup so it never blocks first render
+setTimeout(maybeAutoBackup, 6000)
+
+// ── GLOBAL ERROR VISIBILITY ──────────────────────────────────
+// If anything throws unhandled, show it on screen instead of a silent blank page.
+function showFatalError(msg) {
+  try {
+    let el = document.getElementById('fatalErr')
+    if (!el) {
+      el = document.createElement('div')
+      el.id = 'fatalErr'
+      el.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#2e0f0f;border-bottom:2px solid #f47878;color:#fff;font-family:monospace;font-size:12px;padding:10px 40px 10px 14px;line-height:1.5'
+      const x = document.createElement('button')
+      x.textContent = '✕'
+      x.style.cssText = 'position:absolute;right:8px;top:8px;background:none;border:none;color:#f47878;font-size:16px;cursor:pointer'
+      x.onclick = () => el.remove()
+      el.appendChild(x)
+      const txt = document.createElement('div')
+      txt.id = 'fatalErrTxt'
+      el.appendChild(txt)
+      document.body.appendChild(el)
+    }
+    const t = document.getElementById('fatalErrTxt')
+    if (t) t.textContent = '⚠ App error: ' + msg + ' — screenshot this and re-upload the latest index.html if it persists.'
+  } catch(e) {}
+}
+window.addEventListener('error', e => showFatalError(e.message || 'unknown error'))
+window.addEventListener('unhandledrejection', e => showFatalError((e.reason && e.reason.message) || String(e.reason || 'unhandled promise rejection')))
+
+// ── PORTION SCALING ──────────────────────────────────────────
+function scalePortion(factor) {
+  const L = state.log
+  if (!L.origNutrition) { L.origNutrition = JSON.parse(JSON.stringify(L.nutrition)); }
+  L.portionScale = factor
+  const o = L.origNutrition
+  const s = k => o[k] != null ? Math.round(o[k] * factor) : o[k]
+  L.nutrition = { ...o, carbs: s('carbs'), calories: s('calories'), protein: s('protein'), fat: s('fat'), fiber: s('fiber'), sugar: s('sugar') }
+  // Recalculate the dose from scaled carbs — reapplies caps, warnings, split logic
+  L.dose = calcDose(L.nutrition.carbs, state.settings.icr, L.nutrition.isSplit, L.currentGlucose)
+  // Update the already-saved meal record
+  const meal = state.meals.find(m => m.id === L.currentMealId)
+  if (meal) {
+    meal.nutrition = { ...meal.nutrition, ...L.nutrition }
+    meal.dose = L.dose
+    meal.portionScale = factor
+    meal.splitDueAt = L.dose.split ? (meal.splitDueAt || new Date(Date.now() + L.dose.delay * 60000).toISOString()) : null
+    save()
+  }
+  render()
+}
+
+// ── MEAL EDIT / DELETE ───────────────────────────────────────
+function startMealEdit(id) {
+  state.meals.forEach(m => {
+    m._editing = m.id === id
+    if (m.id === id) m._expanded = true  // form lives in the expanded card
+  })
+  render()
+}
+function cancelMealEdit(id) {
+  const m = state.meals.find(x => x.id === id)
+  if (m) m._editing = false
+  render()
+}
+function saveMealEdit(id, sid) {
+  const m = state.meals.find(x => x.id === id)
+  if (!m) return
+  const desc = document.getElementById('editDesc_' + sid)?.value?.trim()
+  const carbs = clampNum(parseFloat(document.getElementById('editCarbs_' + sid)?.value), 0, MAX_CARBS_PER_MEAL, m.nutrition.carbs)
+  const dose = clampNum(parseFloat(document.getElementById('editDose_' + sid)?.value), 0, 50, m.dose.total)
+  if (desc) m.description = desc
+  m.nutrition.carbs = carbs
+  m.dose.total = dose
+  m.edited = true
+  m._editing = false
+  save()
+  render()
+  notify('Meal updated ✓', 'ok')
+}
+function deleteMeal(id) {
+  const m = state.meals.find(x => x.id === id)
+  if (!m) return
+  if (!confirm('Delete this meal permanently? This cannot be undone.')) return
+  try { ImageStore.del(id).catch(()=>{}) } catch(e) {}
+  state.meals = state.meals.filter(x => x.id !== id)
+  save()
+  render()
+  notify('Meal deleted', 'ok')
 }
 
 // ── REMINDERS: SPLIT-DOSE TIMER + POST-MEAL NUDGE ────────────
