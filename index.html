@@ -874,6 +874,8 @@ function load() {
     // re-write it. Legacy data has imageB64 inline → migrated on first save().
     if (d.meals) state.meals = d.meals.map(m => ({ ...m, _imgSaved: !!m.hasImage }))
     if (d.settings) state.settings = { ...state.settings, ...d.settings }
+    // Backfill/refresh effective ICR under the current formula for consistency
+    state.meals.forEach(m => { if (m.preGlucose && m.postGlucose) computeEffectiveICR(m) })
     if (d.favourites) state.favourites = d.favourites
     if (d.narrative) state.narrative = d.narrative
   } catch (e) {
@@ -1309,14 +1311,7 @@ function doPostGlucose(val) {
   const meal = state.meals.find(m => m.id === L.currentMealId)
   if (meal) {
     meal.postGlucose = { value: val, ts: new Date().toISOString() }
-    if (L.preGlucose && L.nutrition) {
-      const carbsAbsorbed = L.nutrition.carbs
-      const insulinGiven = L.dose.total
-      const glucoseRise = val - L.preGlucose
-      if (glucoseRise > 0 && insulinGiven > 0) {
-        meal.effectiveICR = Math.round((carbsAbsorbed / insulinGiven) * (1 / (1 + glucoseRise / 100)) * 10) / 10
-      }
-    }
+    computeEffectiveICR(meal)
     save()
   }
   L.postRecorded = true
@@ -2608,7 +2603,7 @@ function renderSettings() {
       <div class="about-card">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
           <span><b>CarbLens</b> — Insulin Intelligence</span>
-          <span style="font-size:10px;background:var(--accent-d);color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:2px 8px;white-space:nowrap;margin-left:8px">v2026-07-18 18:02 UTC</span>
+          <span style="font-size:10px;background:var(--accent-d);color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:2px 8px;white-space:nowrap;margin-left:8px">v2026-07-18 18:26 UTC</span>
         </div>
         <span>AI-powered meal analysis with ICR-based insulin dosing. Designed for Type 1 diabetes management.</span>
         <div style="display:flex;align-items:center;gap:6px;padding-top:4px;border-top:1px solid var(--border);margin-top:4px">
@@ -2759,6 +2754,21 @@ function cancelHistoryGluco(id, type) {
   render()
 }
 
+
+// ── EFFECTIVE ICR ────────────────────────────────────────────
+// ISF-based: infer the dose you actually needed from the glucose change,
+// then derive the ratio. Works for rises AND drops (a drop = over-dosed).
+function computeEffectiveICR(meal) {
+  if (!(meal.preGlucose && meal.postGlucose && meal.dose)) return
+  const rise = meal.postGlucose.value - meal.preGlucose.value
+  const insulinGiven = meal.dose.total
+  const carbs = meal.nutrition && meal.nutrition.carbs
+  if (!(insulinGiven > 0 && carbs > 0)) { meal.effectiveICR = null; return }
+  const isf = clampNum(state.settings.isf, 5, 300, 40)
+  const impliedDose = insulinGiven + rise / isf  // dose that would have held you level
+  meal.effectiveICR = impliedDose > 0.5 ? Math.round((carbs / impliedDose) * 10) / 10 : null
+}
+
 function saveHistoryGluco(id, type, inputId) {
   const meal = state.meals.find(m => m.id === id)
   if (!meal) return
@@ -2776,17 +2786,7 @@ function saveHistoryGluco(id, type, inputId) {
     meal.postGlucose = reading
     meal._editingPost = false
   }
-  // Recalculate effective ICR if we now have both readings
-  if (meal.preGlucose && meal.postGlucose && meal.dose) {
-    const rise = meal.postGlucose.value - meal.preGlucose.value
-    const insulinGiven = meal.dose.total
-    const carbs = meal.nutrition.carbs
-    if (rise > 0 && insulinGiven > 0 && carbs > 0) {
-      meal.effectiveICR = Math.round((carbs / insulinGiven) * (1 / (1 + rise / 100)) * 10) / 10
-    } else {
-      meal.effectiveICR = null
-    }
-  }
+  computeEffectiveICR(meal)
   save()
   render()
 }
