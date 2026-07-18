@@ -1325,6 +1325,45 @@ function buildExport() {
   }
 }
 
+
+// Full backup: same as buildExport but embeds photos (base64) from IndexedDB.
+async function buildFullExport() {
+  const base = buildExport()
+  base.version = 3
+  base.includesPhotos = true
+  // Ensure every stored image is loaded, then embed
+  for (const m of base.meals) {
+    const src = state.meals.find(x => x.id === m.id)
+    if (src && (src.imageB64 || src.hasImage)) {
+      let img = src.imageB64
+      if (!img && src.hasImage) {
+        try { img = await ImageStore.get(src.id) } catch(e) { img = null }
+      }
+      if (img) { m.imageB64 = img; m.imageMime = src.imageMime || 'image/jpeg'; m.hasImage = true }
+    }
+  }
+  return base
+}
+
+async function downloadFullBackup() {
+  notify('Building full backup — this can take a moment…')
+  try {
+    const data = await buildFullExport()
+    const withPhotos = data.meals.filter(m => m.imageB64).length
+    const json = JSON.stringify(data)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = backupFilename().replace('.json', '-full.json')
+    a.click()
+    URL.revokeObjectURL(url)
+    notify(`✓ Full backup saved — ${withPhotos} photos, ${(blob.size/1048576).toFixed(1)} MB`, 'ok')
+  } catch(e) {
+    notify('Full backup failed: ' + e.message, 'err')
+  }
+}
+
 function backupFilename() {
   return `carblens-backup-${new Date().toISOString().slice(0,10)}.json`
 }
@@ -2458,11 +2497,12 @@ function renderSettings() {
     <div class="set-sec">
       <div class="set-ttl">Backup &amp; Export</div>
       <div class="integ-card">
-        <div class="integ-note small">The JSON backup includes your full history plus configuration — Gemini API key, Google Client ID, model choice, and theme — so restoring on a new device is one step. Keep the file private (it contains your keys). Photos are not included. The PDF report is a formatted summary for your consultant.</div>
+        <div class="integ-note small">The JSON backup includes your full history plus configuration — Gemini API key, Google Client ID, model choice, and theme — so restoring on a new device is one step. Keep the file private (it contains your keys). The standard backup skips photos to stay small; <b>Full backup</b> embeds every photo too (larger file, ~100–300KB per photo) and restore puts them back automatically. The PDF report is a formatted summary for your consultant.</div>
         <div class="row" style="gap:8px;flex-wrap:wrap">
           <button class="btn-ghost" onclick="syncToDrive()" style="flex:1">↓ JSON backup</button>
           <button class="btn-ghost" onclick="exportPDF()" style="flex:1">↓ PDF report</button>
           <button class="btn-ghost" onclick="exportCSV()" style="flex:1">↓ CSV</button>
+          <button class="btn-ghost" onclick="downloadFullBackup()" style="flex:1;white-space:nowrap">↓ Full backup 📷</button>
         </div>
         <button class="btn-ghost" id="driveBtn" onclick="uploadToDrive()" style="width:100%">☁ Upload backup to Google Drive</button>
         <div style="margin-top:4px">
@@ -2521,7 +2561,7 @@ function renderSettings() {
       <div class="about-card">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
           <span><b>CarbLens</b> — Insulin Intelligence</span>
-          <span style="font-size:10px;background:var(--accent-d);color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:2px 8px;white-space:nowrap;margin-left:8px">v2026-07-18 13:05 UTC</span>
+          <span style="font-size:10px;background:var(--accent-d);color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:2px 8px;white-space:nowrap;margin-left:8px">v2026-07-18 17:40 UTC</span>
         </div>
         <span>AI-powered meal analysis with ICR-based insulin dosing. Designed for Type 1 diabetes management.</span>
         <div style="display:flex;align-items:center;gap:6px;padding-top:4px;border-top:1px solid var(--border);margin-top:4px">
@@ -2913,7 +2953,7 @@ function restoreBackup(input) {
   const file = input.files[0]
   if (!file) return
   const reader = new FileReader()
-  reader.onload = e => {
+  reader.onload = async e => {
     try {
       const d = JSON.parse(e.target.result)
       if (!d.meals || !Array.isArray(d.meals)) throw new Error('Invalid backup file')
@@ -2928,6 +2968,14 @@ function restoreBackup(input) {
         }
         return cleaned
       })
+      // If the backup contains (validated) photos, write them into IndexedDB
+      let photosRestored = 0
+      for (const m of newMeals) {
+        if (m.imageB64) {
+          try { await ImageStore.set(m.id, m.imageB64); m.hasImage = true; m._imgSaved = true; photosRestored++ }
+          catch(e) { m.hasImage = false }
+        }
+      }
       state.meals = [...state.meals, ...newMeals].sort((a,b) => new Date(b.timestamp)-new Date(a.timestamp))
       if (d.settings) state.settings = { ...state.settings, ...d.settings }
       if (d.favourites) {
@@ -2951,7 +2999,7 @@ function restoreBackup(input) {
       }
       save()
       render()
-      notify(`✓ Restored ${newMeals.length} new meals${restored.length ? ' + ' + restored.join(' + ') : ''}.`, 'ok')
+      notify(`✓ Restored ${newMeals.length} new meals${photosRestored ? ` (${photosRestored} photos)` : ''}${restored.length ? ' + ' + restored.join(' + ') : ''}.`, 'ok')
     } catch(err) {
       notify('Could not restore backup: ' + err.message, 'err')
     }
